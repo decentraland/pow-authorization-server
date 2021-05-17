@@ -1,18 +1,17 @@
-import type { IFetchComponent, RoutedContext } from '@well-known-components/http-server'
+import type { IFetchComponent } from '@well-known-components/http-server'
 import type {
-  IConfigComponent,
-  ILoggerComponent,
-  IHttpServerComponent,
   IBaseComponent,
+  IConfigComponent,
+  IHttpServerComponent,
+  ILoggerComponent,
   IMetricsComponent
 } from '@well-known-components/interfaces'
+import { SigningKeys } from './logic/key-generator'
 import { metricDeclarations } from './metrics'
 
 export type GlobalContext = {
   components: BaseComponents
 }
-
-export type Context<Path extends string = any> = RoutedContext<GlobalContext, Path>
 
 // components used in every environment
 export type BaseComponents = {
@@ -21,6 +20,7 @@ export type BaseComponents = {
   server: IHttpServerComponent<GlobalContext>
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
+  keys: SigningKeys
 }
 
 // components used in runtime

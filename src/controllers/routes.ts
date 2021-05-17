@@ -1,8 +1,7 @@
 import { Router } from '@well-known-components/http-server'
 import { GlobalContext } from '../types'
+import { obtainChallengeHandler, verifyChallengeHandler } from './handlers/challenge-handler'
 import { publicKeyHandler } from './handlers/public-key-handler'
-import { obtainChallengeHandler } from './handlers/obtain-challenge-handler'
-import { verifyChallengeHandler } from './handlers/verify-challenge-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(globalContext: GlobalContext): Promise<Router<GlobalContext>> {
@@ -21,7 +20,7 @@ export async function setupRouter(globalContext: GlobalContext): Promise<Router<
   // // If challenge is valid, returns JWT as cookie
   // POST /challenge_response { nonce: number, difficulty: 2, hash: string  }
   // OK 200 (response sets a cookie)
-  router.post('/challenge', verifyChallengeHandler)
+  router.post('/challenge', verifyChallengeHandler(globalContext.components))
 
   return router
 }

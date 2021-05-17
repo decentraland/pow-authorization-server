@@ -1,19 +1,19 @@
 import { AppComponents } from '../../types'
 
 // handlers arguments only type what they need, to make unit testing easier
-export type PublicKeyComponents = Pick<AppComponents, 'metrics'>
+export type PublicKeyComponents = Pick<AppComponents, 'metrics' | 'keys'>
 
 export async function publicKeyHandler(context: { url: URL; components: PublicKeyComponents }) {
   const {
     url,
-    components: { metrics }
+    components: { metrics, keys }
   } = context
 
-  metrics.increment('public_key_counter', {
+  metrics.increment('total_request', {
     pathname: url.pathname
   })
 
   return {
-    body: { publicKey: 'key' }
+    body: { publicKey: keys.publicKey }
   }
 }
