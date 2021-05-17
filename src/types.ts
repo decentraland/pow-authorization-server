@@ -1,16 +1,18 @@
-import type { IFetchComponent } from "@well-known-components/http-server"
+import type { IFetchComponent, RoutedContext } from '@well-known-components/http-server'
 import type {
   IConfigComponent,
   ILoggerComponent,
   IHttpServerComponent,
   IBaseComponent,
-  IMetricsComponent,
-} from "@well-known-components/interfaces"
-import { metricDeclarations } from "./metrics"
+  IMetricsComponent
+} from '@well-known-components/interfaces'
+import { metricDeclarations } from './metrics'
 
 export type GlobalContext = {
   components: BaseComponents
 }
+
+export type Context<Path extends string = any> = RoutedContext<GlobalContext, Path>
 
 // components used in every environment
 export type BaseComponents = {
@@ -27,4 +29,4 @@ export type AppComponents = BaseComponents & {
 }
 
 // components used in tests
-export type TestComponents = BaseComponents & {}
+export type TestComponents = BaseComponents
