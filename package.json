@@ -1,15 +1,41 @@
 {
-  "name": "crypto-exporter",
+  "name": "pow-authorization-server",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 120,
+    "trailingComma": "none"
+  },
+  "lint-staged": {
+    "**/*.{js,ts,tsx}": [
+      "npm lint:fix"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "test": "mocha"
+    "test": "mocha",
+    "lint:fix": "eslint '**/*.{js,ts,tsx}' --quiet --fix",
+    "lint:check": "eslint '**/*.{js,ts,tsx}' --quiet",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
+    "eslint": "^7.26.0",
+    "eslint-config-prettier": "^7.2.0",
+    "eslint-plugin-prettier": "^3.3.1",
     "expect": "^26.6.2",
+    "husky": "^6.0.0",
     "mocha": "^8.3.2",
+    "prettier": "^2.2.1",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.4"
   },
@@ -20,6 +46,7 @@
     "@well-known-components/logger": "^1.0.0",
     "@well-known-components/metrics": "^1.1.1",
     "@well-known-components/test-helpers": "^1.1.0-20210427222307.commit-d92c3ed",
+    "husky": "^6.0.0",
     "prom-client": "^13.1.0"
   }
 }
