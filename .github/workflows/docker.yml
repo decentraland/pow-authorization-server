@@ -22,7 +22,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           # push: true
-          tags: well-known-components/template-server:latest
+          tags: decentraland/pow-authorization-server:latest
           # build-args: |
           #   arg1=value1
           #   arg2=value2

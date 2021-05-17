@@ -1,13 +1,12 @@
-import { main } from '../../src/service'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { createServerComponent, IFetchComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
-import nodeFetch from 'node-fetch'
-import { GlobalContext, TestComponents } from '../../src/types'
-import { metricDeclarations } from '../../src/metrics'
-import { IHttpServerComponent } from '@well-known-components/interfaces'
 import { createMetricsComponent } from '@well-known-components/metrics'
 import { createRunner } from '@well-known-components/test-helpers'
+import nodeFetch from 'node-fetch'
+import { metricDeclarations } from '../../src/metrics'
+import { main } from '../../src/service'
+import { GlobalContext, TestComponents } from '../../src/types'
 
 const currentPort = 19000
 
