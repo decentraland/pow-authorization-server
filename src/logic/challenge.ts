@@ -18,10 +18,10 @@ export async function isValidChallenge(solvedChallenge: SolvedChallenge, givenCh
   }
   const hash = crypto
     .createHash('sha256')
-    .update(solvedChallenge.challenge + solvedChallenge.nonce, 'hex')
+    .update(givenChallenge.challenge + solvedChallenge.nonce, 'hex')
     .digest('hex') // hash the message
 
-  return hash.startsWith('0'.repeat(solvedChallenge.complexity))
+  return hash.startsWith('0'.repeat(givenChallenge.complexity))
 }
 
 export async function generateChallenge(): Promise<Challenge> {
