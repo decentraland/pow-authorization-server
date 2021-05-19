@@ -1,4 +1,3 @@
-import expect from 'expect'
 import { test } from '../harness/test-components-http-server'
 import { testMock } from '../harness/test-components-mock'
 
@@ -21,7 +20,7 @@ test('integration sanity tests using a real server backend', function ({ compone
     expect(r.status).toEqual(200)
     expect(await r.text()).toEqual('/public_key')
 
-    expect(metrics.increment.calledOnceWith('public_key_counter', { pathname: '/public_key' })).toEqual(true)
+    expect(metrics.increment.calledOnceWith('total_request', { pathname: '/public_key' })).toEqual(true)
   })
 
   it('random url responds 404', async () => {

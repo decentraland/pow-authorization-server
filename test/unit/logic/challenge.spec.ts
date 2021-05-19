@@ -1,7 +1,7 @@
 import * as crypto from 'crypto'
 import { Challenge, isValidChallenge, SolvedChallenge } from '../../../src/logic/challenge'
 
-describe.only('challenge tests', () => {
+describe('challenge tests', () => {
   it('simple test', async () => {
     const challenge = crypto.randomBytes(20).toString('hex')
 

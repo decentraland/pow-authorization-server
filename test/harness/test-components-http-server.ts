@@ -3,7 +3,8 @@ import { createServerComponent, IFetchComponent } from '@well-known-components/h
 import { createLogComponent } from '@well-known-components/logger'
 import { createMetricsComponent } from '@well-known-components/metrics'
 import { createRunner } from '@well-known-components/test-helpers'
-import nodeFetch from 'node-fetch'
+import nodeFetch, { RequestInfo, RequestInit } from 'node-fetch'
+import { generateSigningKeys } from '../../src/logic/key-generator'
 import { metricDeclarations } from '../../src/metrics'
 import { main } from '../../src/service'
 import { GlobalContext, TestComponents } from '../../src/types'
@@ -31,7 +32,7 @@ async function initComponents(): Promise<TestComponents> {
   const server = await createServerComponent<GlobalContext>({ logs, config }, {})
 
   const fetch: IFetchComponent = {
-    async fetch(url, initRequest?) {
+    async fetch(url: RequestInfo, initRequest?: RequestInit) {
       if (typeof url == 'string' && url.startsWith('/')) {
         return nodeFetch(protocolHostAndProtocol + url, { ...initRequest })
       } else {
@@ -42,5 +43,7 @@ async function initComponents(): Promise<TestComponents> {
 
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
 
-  return { logs, config, server, fetch, metrics }
+  const keys = generateSigningKeys()
+
+  return { logs, config, server, fetch, metrics, keys }
 }

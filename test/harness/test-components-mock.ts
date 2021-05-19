@@ -3,6 +3,7 @@ import { createTestServerComponent, IFetchComponent } from '@well-known-componen
 import { createLogComponent } from '@well-known-components/logger'
 import { createTestMetricsComponent } from '@well-known-components/metrics'
 import { createRunner } from '@well-known-components/test-helpers'
+import { generateSigningKeys } from '../../src/logic/key-generator'
 import { metricDeclarations } from '../../src/metrics'
 import { main } from '../../src/service'
 import { GlobalContext, TestComponents } from '../../src/types'
@@ -24,5 +25,7 @@ async function initComponents(): Promise<TestComponents> {
 
   const metrics = createTestMetricsComponent(metricDeclarations)
 
-  return { logs, config, server, fetch, metrics }
+  const keys = generateSigningKeys()
+
+  return { logs, config, server, fetch, metrics, keys }
 }
