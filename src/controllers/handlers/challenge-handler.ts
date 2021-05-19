@@ -1,10 +1,9 @@
 import { IHttpServerComponent } from '@well-known-components/interfaces'
-import * as cookie from 'cookie'
-import * as jwt from 'jsonwebtoken'
 import { generateChallenge, isValidChallenge, SolvedChallenge } from '../../logic/challenge'
+import { getCookieHeader } from '../../logic/cookie'
+import { signJWT } from '../../logic/jwt'
 import { AppComponents, GlobalContext } from '../../types'
 
-// handlers arguments only type what they need, to make unit testing easier
 export type VerifyChallengeComponents = Pick<AppComponents, 'metrics' | 'keys'>
 export function verifyChallengeHandler(
   components: VerifyChallengeComponents
@@ -21,35 +20,26 @@ export function verifyChallengeHandler(
 
     // validate
     const isValid = isValidChallenge(toValidate, {
+      // TODO: Read them from memory
       challenge: toValidate.challenge,
       complexity: toValidate.complexity
     })
     if (!isValid) {
-      return { status: 401 }
+      return { status: 401, body: 'Invalid Challenge' }
     }
 
     // generate JWT
-    const signedJWT = jwt.sign(
-      {
-        nonce: toValidate.nonce,
-        challenge: toValidate.challenge,
-        complexity: toValidate.complexity
-      },
-      components.keys.privateKey,
-      { algorithm: 'RS256', expiresIn: '7d' }
-    )
-    // set cookie
+    const signedJWT = signJWT(toValidate, components.keys.privateKey)
 
     return {
       body: {
         jwt: signedJWT
       },
-      headers: { 'Set-Cookie': cookie.serialize('JWT', signedJWT, { expires: new Date(Date.now() + 7 * 24 * 3600) }) }
+      headers: getCookieHeader(signedJWT) // set cookie
     }
   }
 }
 
-// handlers arguments only type what they need, to make unit testing easier
 export type ObtainChallengeComponents = Pick<AppComponents, 'metrics'>
 export async function obtainChallengeHandler(context: { url: URL; components: ObtainChallengeComponents }) {
   const {
@@ -58,8 +48,8 @@ export async function obtainChallengeHandler(context: { url: URL; components: Ob
   } = context
 
   metrics.increment('total_request', {
-    pathname: url.pathname,
-    method: 'GET'
+    pathname: url.pathname
+    // method: context.request.method // TODO: fix this
   })
 
   return {
