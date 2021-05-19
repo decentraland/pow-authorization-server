@@ -1,7 +1,11 @@
+import { IHttpServerComponent } from '@well-known-components/interfaces'
 import { AppComponents } from '../../types'
 
 export type PublicKeyComponents = Pick<AppComponents, 'metrics' | 'keys'>
-export async function publicKeyHandler(context: { url: URL; components: PublicKeyComponents }) {
+export async function publicKeyHandler(context: {
+  url: URL
+  components: PublicKeyComponents
+}): Promise<IHttpServerComponent.IResponse> {
   const {
     url,
     components: { metrics, keys }

@@ -20,7 +20,7 @@ export async function setupRouter(globalContext: GlobalContext): Promise<Router<
   // If challenge is valid, returns JWT as cookie
   // POST /challenge_response { nonce: number, difficulty: 2, hash: string  }
   // OK 200 (response sets a cookie)
-  router.post('/challenge', verifyChallengeHandler(globalContext.components))
+  router.post('/challenge', verifyChallengeHandler)
 
   return router
 }

@@ -19,7 +19,6 @@ describe('public-key-controller-unit', () => {
     const publicKeyBody = { body: { publicKey: keys.publicKey } }
 
     const response = await publicKeyHandler({ url, components: { metrics, keys } })
-
     expect(response).toEqual(publicKeyBody)
   })
 
