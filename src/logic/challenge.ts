@@ -1,26 +1,29 @@
-export async function digestMessage(message: string) {
-  const msgUint8 = new TextEncoder().encode(message) // encode as (utf-8) Uint8Array
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8) // hash the message
-  const hashArray = Array.from(new Uint8Array(hashBuffer)) // convert buffer to byte array
-  const hashHex = hashArray.map((b) => b.toString(10).padStart(2, '0')).join('') // convert bytes to string
-  return hashHex
+import * as crypto from 'crypto'
+
+export interface Challenge {
+  challenge: string
+  complexity: number
 }
-export async function isValidChallenge(solvedChallenge: SolvedChallenge, givenChallenge: Challenge) {
+
+export type SolvedChallenge = Challenge & {
+  nonce: string
+}
+
+export async function isValidChallenge(solvedChallenge: SolvedChallenge, givenChallenge: Challenge): Promise<boolean> {
   if (
     solvedChallenge.challenge !== givenChallenge.challenge ||
     solvedChallenge.complexity !== givenChallenge.complexity
   ) {
     return false
   }
-  const hash = await digestMessage(solvedChallenge.challenge + solvedChallenge.nonce)
+  const hash = crypto
+    .createHash('sha256')
+    .update(solvedChallenge.challenge + solvedChallenge.nonce, 'hex')
+    .digest('hex') // hash the message
+
   return hash.startsWith('0'.repeat(solvedChallenge.complexity))
 }
 
-interface Challenge {
-  challenge: string
-  complexity: number
-}
-
-export type SolvedChallenge = Challenge & {
-  nonce: number
+export async function generateChallenge(): Promise<Challenge> {
+  return { complexity: 2, challenge: crypto.randomBytes(256).toString('hex') }
 }

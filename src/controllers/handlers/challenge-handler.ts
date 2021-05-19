@@ -1,9 +1,11 @@
 import { IHttpServerComponent } from '@well-known-components/interfaces'
-import { SolvedChallenge } from '../../logic/challenge'
+import * as cookie from 'cookie'
+import * as jwt from 'jsonwebtoken'
+import { generateChallenge, isValidChallenge, SolvedChallenge } from '../../logic/challenge'
 import { AppComponents, GlobalContext } from '../../types'
 
 // handlers arguments only type what they need, to make unit testing easier
-export type VerifyChallengeComponents = Pick<AppComponents, 'metrics'>
+export type VerifyChallengeComponents = Pick<AppComponents, 'metrics' | 'keys'>
 export function verifyChallengeHandler(
   components: VerifyChallengeComponents
 ): IHttpServerComponent.IRequestHandler<GlobalContext> {
@@ -18,25 +20,41 @@ export function verifyChallengeHandler(
     const toValidate: SolvedChallenge = await context.request.clone().json()
 
     // validate
+    const isValid = isValidChallenge(toValidate, {
+      challenge: toValidate.challenge,
+      complexity: toValidate.complexity
+    })
+    if (!isValid) {
+      return { status: 401 }
+    }
 
-    // const isValid = isValidChallenge(toValidate, {
-    //   challenge: toValidate.challenge,
-    //   complexity: toValidate.complexity
-    // })
-
+    // generate JWT
+    const signedJWT = jwt.sign(
+      {
+        nonce: toValidate.nonce,
+        challenge: toValidate.challenge,
+        complexity: toValidate.complexity
+      },
+      components.keys.privateKey,
+      { algorithm: 'RS256', expiresIn: '7d' }
+    )
     // set cookie
 
     return {
       body: {
-        jwt: 'token'
-      }
+        jwt: signedJWT
+      },
+      headers: { 'Set-Cookie': cookie.serialize('JWT', signedJWT, { expires: new Date(Date.now() + 7 * 24 * 3600) }) }
     }
   }
 }
 
 // handlers arguments only type what they need, to make unit testing easier
 export type ObtainChallengeComponents = Pick<AppComponents, 'metrics'>
-export async function obtainChallengeHandler(context: { url: URL; components: ObtainChallengeComponents }) {
+export async function obtainChallengeHandler(context: {
+  url: URL
+  components: ObtainChallengeComponents
+}): Promise<IHttpServerComponent.IRequestHandler<GlobalContext>> {
   const {
     url,
     components: { metrics }
@@ -48,6 +66,6 @@ export async function obtainChallengeHandler(context: { url: URL; components: Ob
   })
 
   return {
-    body: { complexity: 2, challenge: 'hash' }
+    body: generateChallenge()
   }
 }

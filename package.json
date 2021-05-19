@@ -19,12 +19,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "test": "mocha",
+    "test": "jest --forceExit --detectOpenHandles --coverage --verbose",
     "lint:fix": "eslint '**/*.{js,ts,tsx}' --quiet --fix",
     "lint:check": "eslint '**/*.{js,ts,tsx}' --quiet",
     "prepare": "husky install"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.23",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.0.1",
     "@typescript-eslint/eslint-plugin": "^4.23.0",
@@ -34,19 +35,25 @@
     "eslint-plugin-prettier": "^3.3.1",
     "expect": "^26.6.2",
     "husky": "^6.0.0",
+    "jest": "^26.6.3",
     "mocha": "^8.3.2",
     "prettier": "^2.2.1",
+    "ts-jest": "^26.5.6",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.4"
   },
   "dependencies": {
+    "@types/cookie": "^0.4.0",
+    "@types/jsonwebtoken": "^8.5.1",
     "@well-known-components/env-config-provider": "^1.1.0",
     "@well-known-components/http-server": "^1.0.0",
     "@well-known-components/interfaces": "^1.1.0",
     "@well-known-components/logger": "^1.0.0",
     "@well-known-components/metrics": "^1.1.1",
     "@well-known-components/test-helpers": "^1.1.0-20210427222307.commit-d92c3ed",
+    "cookie": "^0.4.1",
     "husky": "^6.0.0",
+    "jsonwebtoken": "^8.5.1",
     "prom-client": "^13.1.0"
   }
 }
