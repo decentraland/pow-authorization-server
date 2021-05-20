@@ -7,11 +7,12 @@ describe('Key generator', () => {
   })
 
   describe('generateSigningKeys', () => {
+    const randomBytes = 'random string'
     const keyPair: SigningKeys = {
       privateKey: 'a private key',
-      publicKey: 'a public key'
+      publicKey: 'a public key',
+      passphrase: randomBytes
     }
-    const randomBytes = 'random string'
 
     let spyGenerateKeyPairSync: jest.SpyInstance
     let spyRandomBytes: jest.SpyInstance
@@ -27,7 +28,7 @@ describe('Key generator', () => {
       expect(generateSigningKeys()).toEqual(keyPair)
     })
 
-    it('should call the library with the expected parameters', () => {
+    it('should call the crypto library with the expected parameters', () => {
       expect(spyGenerateKeyPairSync.mock.calls).toEqual([
         [
           'rsa',

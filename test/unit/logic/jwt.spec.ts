@@ -17,7 +17,8 @@ describe('JWT', () => {
       nonce: 'nonce'
     }
 
-    const privateKey = 'a private key'
+    const key = 'a private key'
+    const passphrase = 'a passphrase'
 
     beforeAll(() => {
       spy = jest.spyOn(jwt, 'sign')
@@ -25,7 +26,7 @@ describe('JWT', () => {
     })
 
     it('should return the signed JWT', async () => {
-      expect(signJWT(solved, privateKey)).toEqual(signedJWT)
+      expect(signJWT(solved, key, passphrase)).toEqual(signedJWT)
     })
 
     it('should call the jwt library with the expected parameters', () => {
@@ -34,7 +35,7 @@ describe('JWT', () => {
           {
             ...solved
           },
-          privateKey,
+          { key, passphrase },
           { algorithm: 'RS256', expiresIn: '7d' }
         ]
       ])

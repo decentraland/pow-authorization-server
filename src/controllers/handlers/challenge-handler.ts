@@ -22,7 +22,7 @@ export async function verifyChallengeHandler(
   }
 
   // generate JWT
-  const signedJWT = signJWT(toValidate, context.components.keys.privateKey)
+  const signedJWT = signJWT(toValidate, context.components.keys.privateKey, context.components.keys.passphrase)
 
   return {
     body: {

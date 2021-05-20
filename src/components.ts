@@ -10,7 +10,6 @@ import { AppComponents, GlobalContext } from './types'
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
   const config = await createDotEnvConfigComponent({})
-
   const logs = createLogComponent()
   const server = await createServerComponent<GlobalContext>({ config, logs }, {})
   const statusChecks = await createStatusCheckComponent({ server })
