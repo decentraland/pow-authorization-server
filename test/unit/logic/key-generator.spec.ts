@@ -23,7 +23,7 @@ describe('Key generator', () => {
       spyRandomBytes.mockReturnValue({ toString: () => randomBytes })
     })
 
-    it('should return the set cookie header with the serialization of the cookie', async () => {
+    it('should return the key pair of private and public keys', async () => {
       expect(generateSigningKeys()).toEqual(keyPair)
     })
 

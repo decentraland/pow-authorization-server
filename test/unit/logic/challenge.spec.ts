@@ -41,7 +41,7 @@ describe('challenge tests', () => {
         solved = { challenge, complexity, nonce: 'solution' }
       })
 
-      it('should return true', async () => {
+      it('should return false', async () => {
         expect(await isValidChallenge(solved, { challenge, complexity: 2 })).toBe(false)
       })
     })
