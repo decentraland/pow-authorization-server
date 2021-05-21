@@ -4,8 +4,8 @@ import * as jwt from 'jsonwebtoken'
 import { Response } from 'node-fetch'
 import { SolvedChallenge } from '../../src/logic/challenge'
 import { AppComponents, BaseComponents } from '../../src/types'
-import { currentTimeInMilliseconds as currentTime, inNext7Days, timeFromString } from './date-time-utils'
-import { fetchLocalHost, postLocalHost, startApp } from './server-utils'
+import { currentTimeInMilliseconds as currentTime, inNext7Days, timeFromString } from './utils/date-time-utils'
+import { fetchLocalHost, postLocalHost, startApp } from './utils/server-utils'
 
 describe('GET /challenge', () => {
   let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
