@@ -10,7 +10,7 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   }
 
   // wire the HTTP router (make it automatic? TBD)
-  const router = await setupRouter(globalContext)
+  const router = await setupRouter()
   components.server.use(router.middleware())
   components.server.setContext(globalContext)
 
