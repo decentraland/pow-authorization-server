@@ -1,7 +1,3 @@
-export function currentTimeInMilliseconds(): number {
-  return new Date().getTime()
-}
-
 export function timeFromString(dateString: string): number {
   return new Date(dateString).getTime()
 }

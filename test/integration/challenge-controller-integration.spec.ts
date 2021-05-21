@@ -4,28 +4,28 @@ import * as jwt from 'jsonwebtoken'
 import { Response } from 'node-fetch'
 import { SolvedChallenge } from '../../src/logic/challenge'
 import { AppComponents, BaseComponents } from '../../src/types'
-import { currentTimeInMilliseconds as currentTime, inNext7Days, timeFromString } from './utils/date-time-utils'
+import { inNext7Days, timeFromString } from './utils/date-time-utils'
 import { fetchLocalHost, postLocalHost, startApp } from './utils/server-utils'
 
 describe('GET /challenge', () => {
   let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
+  let response: Response
 
   beforeAll(async () => {
     program = await startApp()
+
+    response = await fetchLocalHost('/challenge')
   })
 
   afterAll(async () => {
     await program.stop()
   })
 
-  it('responds success status', async () => {
-    const response: Response = await fetchLocalHost('/challenge')
-
+  it('responds with a success status', () => {
     expect(response.status).toEqual(200)
   })
 
   it('responds the complexity and challenge string', async () => {
-    const response: Response = await fetchLocalHost('/challenge')
     const responseBody = await response.json()
 
     expect(responseBody).toEqual(expect.objectContaining({ challenge: expect.any(String), complexity: 4 }))
@@ -51,10 +51,15 @@ describe('POST /challenge', () => {
     await program.stop()
   })
 
-  it('when posting no body then responds 500 status', async () => {
-    const response: Response = await postLocalHost('/challenge')
+  describe('when posting without body', () => {
+    let response: Response
+    beforeAll(async () => {
+      response = await postLocalHost('/challenge')
+    })
 
-    expect(response.status).toEqual(500)
+    it('should respond with 400 status', () => {
+      expect(response.status).toEqual(400)
+    })
   })
 
   it('when posting invalid solved challenge then responds 401 status', async () => {
@@ -74,21 +79,21 @@ describe('POST /challenge', () => {
   })
 
   it('when posting a valid solved challenge then returns the JWT in the body', async () => {
-    const beforeCallTimestamp = Math.floor(currentTime() / 1000)
+    const beforeCallTimestamp = Math.floor(Date.now() / 1000)
 
     const response: Response = await postLocalHost('/challenge', validChallenge)
-    const afterCallTimestamp = Math.ceil(currentTime() / 1000)
+    const afterCallTimestamp = Math.ceil(Date.now() / 1000)
     const returnedJWT = (await response.json()).jwt
 
     validateJWT(returnedJWT, publicKey, validChallenge, beforeCallTimestamp, afterCallTimestamp)
   })
 
   it('when posting a valid solved challenge then returns the JWT in the header as cookie', async () => {
-    const beforeCallTime = currentTime()
+    const beforeCallTime = Date.now()
     const beforeCallTimestamp = Math.floor(beforeCallTime / 1000)
 
     const response: Response = await postLocalHost('/challenge', validChallenge)
-    const afterCallTimestamp = Math.ceil(currentTime() / 1000)
+    const afterCallTimestamp = Math.ceil(Date.now() / 1000)
 
     expect(response.headers.has('set-cookie')).toEqual(true)
     const cookieValues = cookie.parse(response.headers.get('set-cookie') || '')
@@ -100,8 +105,11 @@ describe('POST /challenge', () => {
     validateJWT(returnedJWT, publicKey, validChallenge, beforeCallTimestamp, afterCallTimestamp)
 
     expect(expirationDate).toBeGreaterThan(beforeCallTime)
-    expect(expirationDate).toBeLessThan(inNext7Days(currentTime()))
+    expect(expirationDate).toBeLessThan(inNext7Days(Date.now()))
   })
+
+  // TODO!: 1) Refactor tests to be only one describe with one beforeAll and multiple its
+  // TODO!: 2) Add test that validates that the cookie is the same than the one returned in the body
 })
 
 function validateJWT(
@@ -116,10 +124,16 @@ function validateJWT(
   expect(decodedJWT).toEqual(
     expect.objectContaining({ ...validChallenge, exp: expect.any(Number), iat: expect.any(Number) })
   )
-  expect((decodedJWT as any).exp).toBeGreaterThan(beforeCallTimestamp)
-  expect((decodedJWT as any).exp).toBeLessThan(Math.ceil(inNext7Days(currentTime()) / 1000))
-  expect((decodedJWT as any).iat).toBeGreaterThanOrEqual(beforeCallTimestamp)
-  expect((decodedJWT as any).iat).toBeLessThanOrEqual(afterCallTimestamp)
+
+  const dateInSevenDaysInSeconds = Math.ceil(inNext7Days(Date.now()) / 1000)
+
+  verifyDateIsCloseTo((decodedJWT as any).exp, beforeCallTimestamp, dateInSevenDaysInSeconds)
+  verifyDateIsCloseTo((decodedJWT as any).iat, beforeCallTimestamp, afterCallTimestamp)
+}
+
+function verifyDateIsCloseTo(firstDate: number, closeBeforeDate: number, closeAfterDate: number) {
+  expect(firstDate).toBeGreaterThanOrEqual(closeBeforeDate)
+  expect(firstDate).toBeLessThanOrEqual(closeAfterDate)
 }
 
 async function obtainPublicKey(): Promise<string> {

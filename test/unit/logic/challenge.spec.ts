@@ -22,6 +22,7 @@ describe('challenge tests', () => {
     let challenge: string
     let complexity: number
     let solved: SolvedChallenge
+
     describe('when the challenge is different', () => {
       beforeAll(async () => {
         challenge = crypto.randomBytes(20).toString('hex')
