@@ -1,12 +1,15 @@
 import { Lifecycle } from '@well-known-components/interfaces'
+import * as cookie from 'cookie'
 import * as jwt from 'jsonwebtoken'
 import { Response } from 'node-fetch'
 import { SolvedChallenge } from '../../src/logic/challenge'
 import { AppComponents, BaseComponents } from '../../src/types'
+import { currentTimeInMilliseconds as currentTime, inNext7Days, timeFromString } from './date-time-utils'
 import { fetchLocalHost, postLocalHost, startApp } from './server-utils'
 
 describe('GET /challenge', () => {
   let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
+
   beforeAll(async () => {
     program = await startApp()
   })
@@ -31,7 +34,7 @@ describe('GET /challenge', () => {
 
 describe('POST /challenge', () => {
   let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
-
+  let publicKey: string
   const validChallenge: SolvedChallenge = {
     complexity: 3,
     challenge: '0844051b66184853ace759705c93ac27c9401ad7',
@@ -41,6 +44,7 @@ describe('POST /challenge', () => {
 
   beforeAll(async () => {
     program = await startApp()
+    publicKey = await obtainPublicKey()
   })
 
   afterAll(async () => {
@@ -70,25 +74,54 @@ describe('POST /challenge', () => {
   })
 
   it('when posting a valid solved challenge then returns the JWT in the body', async () => {
-    const publicKey: string = (await (await fetchLocalHost('/public_key')).json()).publicKey
+    const beforeCallTimestamp = Math.floor(currentTime() / 1000)
+
     const response: Response = await postLocalHost('/challenge', validChallenge)
+    const afterCallTimestamp = Math.ceil(currentTime() / 1000)
     const returnedJWT = (await response.json()).jwt
 
-    expect(returnedJWT).not.toBeUndefined()
-    const decodedJWT = jwt.verify(returnedJWT, publicKey)
-
-    expect(decodedJWT).toEqual(
-      expect.objectContaining({ ...validChallenge, exp: expect.any(Number), iat: expect.any(Number) })
-      // TODO:: Validate something about exp and iat
-    )
+    validateJWT(returnedJWT, publicKey, validChallenge, beforeCallTimestamp, afterCallTimestamp)
   })
 
   it('when posting a valid solved challenge then returns the JWT in the header as cookie', async () => {
-    const response: Response = await postLocalHost('/challenge', validChallenge)
+    const beforeCallTime = currentTime()
+    const beforeCallTimestamp = Math.floor(beforeCallTime / 1000)
 
-    // TODO: Do this as an object
+    const response: Response = await postLocalHost('/challenge', validChallenge)
+    const afterCallTimestamp = Math.ceil(currentTime() / 1000)
+
     expect(response.headers.has('set-cookie')).toEqual(true)
-    expect(response.headers.get('set-cookie')).toEqual(expect.any(String))
-    // TODO: Verify something about the cookie value
+    const cookieValues = cookie.parse(response.headers.get('set-cookie') || '')
+    expect(cookieValues).toEqual(expect.objectContaining({ JWT: expect.any(String), Expires: expect.any(String) }))
+
+    const returnedJWT = cookieValues.JWT
+    const expirationDate = timeFromString(cookieValues.Expires)
+
+    validateJWT(returnedJWT, publicKey, validChallenge, beforeCallTimestamp, afterCallTimestamp)
+
+    expect(expirationDate).toBeGreaterThan(beforeCallTime)
+    expect(expirationDate).toBeLessThan(inNext7Days(currentTime()))
   })
 })
+
+function validateJWT(
+  jwtString: string,
+  publicKey: string,
+  validChallenge: SolvedChallenge,
+  beforeCallTimestamp: number,
+  afterCallTimestamp: number
+) {
+  expect(jwtString).not.toBeUndefined()
+  const decodedJWT = jwt.verify(jwtString, publicKey)
+  expect(decodedJWT).toEqual(
+    expect.objectContaining({ ...validChallenge, exp: expect.any(Number), iat: expect.any(Number) })
+  )
+  expect((decodedJWT as any).exp).toBeGreaterThan(beforeCallTimestamp)
+  expect((decodedJWT as any).exp).toBeLessThan(Math.ceil(inNext7Days(currentTime()) / 1000))
+  expect((decodedJWT as any).iat).toBeGreaterThanOrEqual(beforeCallTimestamp)
+  expect((decodedJWT as any).iat).toBeLessThanOrEqual(afterCallTimestamp)
+}
+
+async function obtainPublicKey(): Promise<string> {
+  return (await (await fetchLocalHost('/public_key')).json()).publicKey
+}
