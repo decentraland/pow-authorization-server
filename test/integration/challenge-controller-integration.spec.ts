@@ -1,20 +1,20 @@
 import { Lifecycle } from '@well-known-components/interfaces'
-import * as cookie from 'cookie'
-import * as jwt from 'jsonwebtoken'
+import { parse as parseCookie } from 'cookie'
+import { verify as verifyJWT } from 'jsonwebtoken'
 import { Response } from 'node-fetch'
 import { SolvedChallenge } from '../../src/logic/challenge'
 import { AppComponents, BaseComponents } from '../../src/types'
-import { inNext7Days, timeFromString } from './utils/date-time-utils'
+import { inNext7Days, verifyDateIsCloseTo } from './utils/date-time-utils'
 import { fetchLocalHost, postLocalHost, startApp } from './utils/server-utils'
 
 describe('GET /challenge', () => {
   let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
-  let response: Response
+  let getChallengeResponse: Response
 
   beforeAll(async () => {
     program = await startApp()
 
-    response = await fetchLocalHost('/challenge')
+    getChallengeResponse = await fetchLocalHost('/challenge')
   })
 
   afterAll(async () => {
@@ -22,11 +22,11 @@ describe('GET /challenge', () => {
   })
 
   it('responds with a success status', () => {
-    expect(response.status).toEqual(200)
+    expect(getChallengeResponse.status).toEqual(200)
   })
 
-  it('responds the complexity and challenge string', async () => {
-    const responseBody = await response.json()
+  it('responds the complexity and challenge', async () => {
+    const responseBody = await getChallengeResponse.json()
 
     expect(responseBody).toEqual(expect.objectContaining({ challenge: expect.any(String), complexity: 4 }))
   })
@@ -51,68 +51,107 @@ describe('POST /challenge', () => {
     await program.stop()
   })
 
-  describe('when posting without body', () => {
-    let response: Response
+  describe('without body', () => {
+    let postChallengeResponse: Response
     beforeAll(async () => {
-      response = await postLocalHost('/challenge')
+      postChallengeResponse = await postLocalHost('/challenge')
     })
 
-    it('should respond with 400 status', () => {
-      expect(response.status).toEqual(400)
+    it('should respond with bad request status', () => {
+      expect(postChallengeResponse.status).toEqual(400)
     })
   })
 
-  it('when posting invalid solved challenge then responds 401 status', async () => {
-    const response: Response = await postLocalHost('/challenge', {
-      complexity: 4,
-      challenge: 'aChallenge',
-      nonce: 'aNonce'
+  describe('with invalid challenge', () => {
+    let postInvalidChallengeResponse: Response
+
+    beforeAll(async () => {
+      postInvalidChallengeResponse = await postLocalHost('/challenge', {
+        complexity: 4,
+        challenge: 'aChallenge'
+      })
     })
 
-    expect(response.status).toEqual(401)
+    it('should respond with bad request status', () => {
+      expect(postInvalidChallengeResponse.status).toEqual(400)
+    })
   })
 
-  it('when posting a valid solved challenge then responds 200 status', async () => {
-    const response: Response = await postLocalHost('/challenge', validChallenge)
+  describe('with wrong solved challenge', () => {
+    let postWrongSolvedChallengeResponse: Response
 
-    expect(response.status).toEqual(200)
+    beforeAll(async () => {
+      postWrongSolvedChallengeResponse = await postLocalHost('/challenge', {
+        complexity: 4,
+        challenge: 'aChallenge',
+        nonce: 'aNonce'
+      })
+    })
+
+    it('should respond with bad request status', () => {
+      expect(postWrongSolvedChallengeResponse.status).toEqual(401)
+    })
   })
 
-  it('when posting a valid solved challenge then returns the JWT in the body', async () => {
-    const beforeCallTimestamp = Math.floor(Date.now() / 1000)
+  describe('with valid challenge', () => {
+    let postValidChallengeResponse: Response
+    let beforeCallTime: number
+    let beforeCallTimestamp: number
+    let afterCallTimestamp: number
 
-    const response: Response = await postLocalHost('/challenge', validChallenge)
-    const afterCallTimestamp = Math.ceil(Date.now() / 1000)
-    const returnedJWT = (await response.json()).jwt
+    beforeAll(async () => {
+      beforeCallTime = Date.now()
+      beforeCallTimestamp = Math.floor(Date.now() / 1000)
+      postValidChallengeResponse = await postLocalHost('/challenge', validChallenge)
+      afterCallTimestamp = Math.ceil(Date.now() / 1000)
+    })
 
-    validateJWT(returnedJWT, publicKey, validChallenge, beforeCallTimestamp, afterCallTimestamp)
+    describe('contains JWT in body', () => {
+      let returnedJWTInBody: string
+
+      beforeAll(async () => {
+        returnedJWTInBody = (await postValidChallengeResponse.json()).jwt
+      })
+
+      it('responds success status', async () => {
+        expect(postValidChallengeResponse.status).toEqual(200)
+      })
+
+      it('returns the JWT in the body', async () => {
+        compareJWT(returnedJWTInBody, publicKey, validChallenge, beforeCallTimestamp, afterCallTimestamp)
+      })
+
+      describe('contains cookie header', () => {
+        let cookieValues: { [x: string]: string; JWT?: any; Expires?: any }
+
+        beforeAll(async () => {
+          expect(postValidChallengeResponse.headers.has('set-cookie')).toEqual(true)
+          cookieValues = parseCookie(postValidChallengeResponse.headers.get('set-cookie') || '')
+        })
+
+        it('contains jwt and expires', async () => {
+          expect(cookieValues).toEqual(
+            expect.objectContaining({ JWT: expect.any(String), Expires: expect.any(String) })
+          )
+        })
+
+        it('returns the same JWT in the cookie header as in body', async () => {
+          const returnedJWTInCookie = cookieValues.JWT
+
+          expect(returnedJWTInCookie).toEqual(returnedJWTInBody)
+        })
+
+        it('contains valid expiration date in the cookie header', async () => {
+          const expirationDate = new Date(cookieValues.Expires).getTime()
+
+          verifyDateIsCloseTo(expirationDate, beforeCallTime, inNext7Days(Date.now()))
+        })
+      })
+    })
   })
-
-  it('when posting a valid solved challenge then returns the JWT in the header as cookie', async () => {
-    const beforeCallTime = Date.now()
-    const beforeCallTimestamp = Math.floor(beforeCallTime / 1000)
-
-    const response: Response = await postLocalHost('/challenge', validChallenge)
-    const afterCallTimestamp = Math.ceil(Date.now() / 1000)
-
-    expect(response.headers.has('set-cookie')).toEqual(true)
-    const cookieValues = cookie.parse(response.headers.get('set-cookie') || '')
-    expect(cookieValues).toEqual(expect.objectContaining({ JWT: expect.any(String), Expires: expect.any(String) }))
-
-    const returnedJWT = cookieValues.JWT
-    const expirationDate = timeFromString(cookieValues.Expires)
-
-    validateJWT(returnedJWT, publicKey, validChallenge, beforeCallTimestamp, afterCallTimestamp)
-
-    expect(expirationDate).toBeGreaterThan(beforeCallTime)
-    expect(expirationDate).toBeLessThan(inNext7Days(Date.now()))
-  })
-
-  // TODO!: 1) Refactor tests to be only one describe with one beforeAll and multiple its
-  // TODO!: 2) Add test that validates that the cookie is the same than the one returned in the body
 })
 
-function validateJWT(
+function compareJWT(
   jwtString: string,
   publicKey: string,
   validChallenge: SolvedChallenge,
@@ -120,7 +159,7 @@ function validateJWT(
   afterCallTimestamp: number
 ) {
   expect(jwtString).not.toBeUndefined()
-  const decodedJWT = jwt.verify(jwtString, publicKey)
+  const decodedJWT = verifyJWT(jwtString, publicKey)
   expect(decodedJWT).toEqual(
     expect.objectContaining({ ...validChallenge, exp: expect.any(Number), iat: expect.any(Number) })
   )
@@ -129,11 +168,6 @@ function validateJWT(
 
   verifyDateIsCloseTo((decodedJWT as any).exp, beforeCallTimestamp, dateInSevenDaysInSeconds)
   verifyDateIsCloseTo((decodedJWT as any).iat, beforeCallTimestamp, afterCallTimestamp)
-}
-
-function verifyDateIsCloseTo(firstDate: number, closeBeforeDate: number, closeAfterDate: number) {
-  expect(firstDate).toBeGreaterThanOrEqual(closeBeforeDate)
-  expect(firstDate).toBeLessThanOrEqual(closeAfterDate)
 }
 
 async function obtainPublicKey(): Promise<string> {

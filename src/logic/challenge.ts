@@ -38,3 +38,7 @@ function notMatching(solvedChallenge: SolvedChallenge, givenChallenge: Challenge
 function hashPhrase(phrase: string) {
   return crypto.createHash(DEFAULT_HASHING_ALGORITHM).update(phrase, 'hex').digest('hex')
 }
+
+export function incompleteSolvedChallenge(toValidate: Partial<SolvedChallenge>): boolean {
+  return toValidate.challenge === undefined || toValidate.complexity === undefined || toValidate.nonce === undefined
+}

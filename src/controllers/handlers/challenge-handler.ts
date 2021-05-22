@@ -1,16 +1,37 @@
 import { IHttpServerComponent } from '@well-known-components/interfaces'
-import { Challenge, generateChallenge, isValidChallenge, SolvedChallenge } from '../../logic/challenge'
+import {
+  Challenge,
+  generateChallenge,
+  incompleteSolvedChallenge,
+  isValidChallenge,
+  SolvedChallenge
+} from '../../logic/challenge'
 import { getCookieHeader } from '../../logic/cookie'
 import { signJWT } from '../../logic/jwt'
 import { AppComponents, GlobalContext } from '../../types'
+
+export async function obtainChallengeHandler(): Promise<IHttpServerComponent.IResponse> {
+  const challenge: Challenge = await generateChallenge()
+  return {
+    body: { ...challenge },
+    status: 200
+  }
+}
 
 export type VerifyChallengeComponents = Pick<AppComponents, 'keys'>
 export async function verifyChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
-  const toValidate: SolvedChallenge = await context.request.clone().json()
+  let toValidate: SolvedChallenge | undefined = undefined
 
-  // validate
+  try {
+    toValidate = await context.request.clone().json()
+  } catch {}
+
+  if (toValidate === undefined || incompleteSolvedChallenge(toValidate)) {
+    return { status: 400, body: 'Invalid Request, body must be present with challenge, nonce and complexity' }
+  }
+
   const isValid = await isValidChallenge(toValidate, {
     // TODO!: Read them from memory
     challenge: toValidate.challenge,
@@ -21,22 +42,13 @@ export async function verifyChallengeHandler(
     return { status: 401, body: 'Invalid Challenge' }
   }
 
-  // generate JWT
   const signedJWT = signJWT(toValidate, context.components.keys.privateKey, context.components.keys.passphrase)
 
   return {
     body: {
       jwt: signedJWT
     },
-    headers: { ...getCookieHeader(signedJWT) }, // set cookie
-    status: 200
-  }
-}
-
-export async function obtainChallengeHandler(): Promise<IHttpServerComponent.IResponse> {
-  const challenge: Challenge = await generateChallenge()
-  return {
-    body: { ...challenge },
+    headers: { ...getCookieHeader(signedJWT) },
     status: 200
   }
 }
