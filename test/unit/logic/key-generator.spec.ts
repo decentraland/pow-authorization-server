@@ -35,7 +35,7 @@ describe('Key generator', () => {
           {
             modulusLength: 4096,
             publicKeyEncoding: {
-              type: 'pkcs1',
+              type: 'spki',
               format: 'pem'
             },
             privateKeyEncoding: {
