@@ -1,12 +1,19 @@
-import { Router } from "@well-known-components/http-server"
-import { GlobalContext } from "../types"
-import { pingHandler } from "./handlers/ping-handler"
+import { Router } from '@well-known-components/http-server'
+import { GlobalContext } from '../types'
+import { obtainChallengeHandler, verifyChallengeHandler } from './handlers/challenge-handler'
+import { publicKeyHandler } from './handlers/public-key-handler'
 
-// We return the entire router because it will be easier to test than a whole server
-export async function setupRouter(globalContext: GlobalContext): Promise<Router<GlobalContext>> {
+export async function setupRouter(): Promise<Router<GlobalContext>> {
   const router = new Router<GlobalContext>()
 
-  router.get("/ping", pingHandler)
+  //  Used by NGINX to obtain the public key used in the validation of each JWT
+  router.get('/public_key', publicKeyHandler)
+
+  // Creates a cryptographic challenge for the client
+  router.get('/challenge', obtainChallengeHandler)
+
+  // If challenge is valid, returns JWT as cookie
+  router.post('/challenge', verifyChallengeHandler)
 
   return router
 }

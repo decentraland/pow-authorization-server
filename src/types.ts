@@ -1,12 +1,13 @@
-import type { IFetchComponent } from "@well-known-components/http-server"
+import type { IFetchComponent } from '@well-known-components/http-server'
 import type {
-  IConfigComponent,
-  ILoggerComponent,
-  IHttpServerComponent,
   IBaseComponent,
-  IMetricsComponent,
-} from "@well-known-components/interfaces"
-import { metricDeclarations } from "./metrics"
+  IConfigComponent,
+  IHttpServerComponent,
+  ILoggerComponent,
+  IMetricsComponent
+} from '@well-known-components/interfaces'
+import { SigningKeys } from './logic/key-generator'
+import { metricDeclarations } from './metrics'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -19,6 +20,7 @@ export type BaseComponents = {
   server: IHttpServerComponent<GlobalContext>
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
+  keys: SigningKeys
 }
 
 // components used in runtime
@@ -27,4 +29,4 @@ export type AppComponents = BaseComponents & {
 }
 
 // components used in tests
-export type TestComponents = BaseComponents & {}
+export type TestComponents = BaseComponents
