@@ -1,27 +1,68 @@
-# template-server
+# Proof of Work: Authorization Server
+
+This service exposes an API to authenticate requests using Proof of work.
+
+Auth server creates a challenge that the client needs to solve using Proof Of Work. The challenge consists of:
+- Complexity: number
+- Challenge: string
+
+So, the client needs to find a nonce (string), that the following calculation evaluates to true:
+
+```
+hash(challenge + nonce).startsWith('0'.repeat(complexity))
+```
+
+The hash used is `sha256` with `hex` text encoding. Challenge size is 256 bytes.
+
+If the challenge is valid, then the service will return a JWT that contains the nonce which will be used as identifier. The JWT is generated using `RS256` algorithm.
+
+The public key to validate the returned JWT can be obtained in a format of `pem` with type `spki`.
+
+## How to integrate with this server?
+
+1. Obtain a challenge:
+
+```pseudo-code
+response = fetch("authserverHostname/challenge")
+challenge: string = response.body.challenge
+complexity: number = response.body.complexity
+```
+
+2. Generate challenge:
+
+```typescript
+import * as crypto from 'crypto'
+
+function generateNonceForChallenge(challenge: string, complexity: number): string {
+  while (true) {
+    const nonce = crypto.randomBytes(256).toString('hex')
+    const hash = crypto.createHash(sha256).update(challenge + nonce, 'hex').digest('hex')
+    const isValid = hash.startsWith('0'.repeat(complexity))
+
+    if (isValid) {
+      return nonce
+    }
+  }
+}
+```
+
+3. Obtain JWT:
+
+```pseudo-code
+response = post("authserverHostname/challenge", { complexity, nonce, challenge })
+jwt = response.body.jwt
+jwtCookieHeader = response.headers['Set-Cookie']
+```
+
+## API Docs
+
+[You can find all API documentation here.](docs/API/AUTH_API.md)
 
 ## Architecture
 
 Extension of "ports and adapters architecture", also known as "hexagonal architecture".
 
 With this architecture, code is organized into several layers: logic, controllers, adapters, and ports.
-
-
-### logic
-
-Deals with pure business logic and shouldn't have side-effects or throw exceptions.
-
-### controllers
-
-The "glue" between all the other layers, orchestrating calls between pure business logic, adapters, and ports.
-
-### adapters
-
-The layer that converts external data representations into internal ones, and vice-versa. Acts as buffer to protect the service from changes in the outside world; when a data representation changes, you only need to change how the adapters deal with it.
-
-### ports
-
-The layer that communicates with the outside world, such as http, kafka, and the database.
 
 ### components
 
