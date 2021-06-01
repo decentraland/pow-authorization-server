@@ -58,6 +58,11 @@ jwtCookieHeader = response.headers['Set-Cookie']
 
 [You can find all API documentation here.](docs/API/AUTH_API.md)
 
+
+
+## Environment Variables
+
+- `SECRETS_DIRECTORY`: Path of the folder where the file `public_key.pem` will be stored when the app starts.
 ## Architecture
 
 Extension of "ports and adapters architecture", also known as "hexagonal architecture".
