@@ -7,7 +7,5 @@ export function writeToFile(dir: string, filename: string, text: string): void {
   }
 
   // Writes text to file
-  fs.writeFile(`${dir}/${filename}`, text, (err) => {
-    if (err) throw err
-  })
+  fs.writeFileSync(`${dir}/${filename}`, text)
 }

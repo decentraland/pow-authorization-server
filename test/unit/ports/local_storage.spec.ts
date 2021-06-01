@@ -12,13 +12,14 @@ describe('Local Storage', () => {
     let spy: jest.SpyInstance
 
     beforeAll(() => {
-      spy = jest.spyOn(fs, 'writeFile')
+      spy = jest.spyOn(fs, 'writeFileSync')
 
       writeToFile(path, filename, 'text')
     })
 
     it('should call the cookies library with the expected parameters', () => {
-      expect(spy.mock.calls).toEqual([['etc/secrets/public_key.pem', 'text', expect.anything()]])
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith('etc/secrets/public_key.pem', 'text')
     })
   })
 })
