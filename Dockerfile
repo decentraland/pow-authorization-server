@@ -23,6 +23,10 @@ RUN npm ci --only=production
 
 # build the release app
 FROM node:lts
+
+
+EXPOSE 5000
+
 WORKDIR /app
 COPY --from=builder /app /app
 CMD [ "npm", "run", "start" ]
