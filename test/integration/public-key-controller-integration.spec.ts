@@ -13,8 +13,6 @@ describe('GET /public_key', () => {
     await program.stop()
   })
 
-  afterAll(async () => {})
-
   it('responds success status', async () => {
     const response: Response = await fetchLocalHost('/public_key')
 

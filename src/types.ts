@@ -1,4 +1,3 @@
-import type { IFetchComponent } from '@well-known-components/http-server'
 import type {
   IBaseComponent,
   IConfigComponent,
@@ -18,7 +17,6 @@ export type BaseComponents = {
   config: IConfigComponent
   logs: ILoggerComponent
   server: IHttpServerComponent<GlobalContext>
-  fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   keys: SigningKeys
 }
