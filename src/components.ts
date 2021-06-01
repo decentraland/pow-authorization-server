@@ -4,7 +4,6 @@ import { createLogComponent } from '@well-known-components/logger'
 import { createMetricsComponent } from '@well-known-components/metrics'
 import { generateSigningKeys } from './logic/key-generator'
 import { metricDeclarations } from './metrics'
-import { createFetchComponent } from './ports/fetch'
 import { writeToFile } from './ports/local_storage'
 import { AppComponents, GlobalContext } from './types'
 
@@ -14,7 +13,6 @@ export async function initComponents(): Promise<AppComponents> {
   const logs = createLogComponent()
   const server = await createServerComponent<GlobalContext>({ config, logs }, {})
   const statusChecks = await createStatusCheckComponent({ server })
-  const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const keys = generateSigningKeys()
 
@@ -26,7 +24,6 @@ export async function initComponents(): Promise<AppComponents> {
     logs,
     server,
     statusChecks,
-    fetch,
     metrics,
     keys
   }
