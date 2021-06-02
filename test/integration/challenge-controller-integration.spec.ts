@@ -3,12 +3,12 @@ import { parse as parseCookie } from 'cookie'
 import { verify as verifyJWT } from 'jsonwebtoken'
 import { Response } from 'node-fetch'
 import { SolvedChallenge } from '../../src/logic/challenge'
-import { AppComponents, BaseComponents } from '../../src/types'
+import { AppComponents } from '../../src/types'
 import { inNext7Days, verifyDateIsCloseTo } from './utils/date-time-utils'
 import { fetchLocalHost, postLocalHost, startApp } from './utils/server-utils'
 
 describe('GET /challenge', () => {
-  let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
+  let program: Lifecycle.ComponentBasedProgram<AppComponents>
   let getChallengeResponse: Response
 
   beforeAll(async () => {
@@ -33,7 +33,7 @@ describe('GET /challenge', () => {
 })
 
 describe('POST /challenge', () => {
-  let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
+  let program: Lifecycle.ComponentBasedProgram<AppComponents>
   let publicKey: string
   const validChallenge: SolvedChallenge = {
     complexity: 3,

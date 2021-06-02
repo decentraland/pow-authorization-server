@@ -8,10 +8,22 @@ import {
 } from '../../logic/challenge'
 import { getCookieHeader } from '../../logic/cookie'
 import { signJWT } from '../../logic/jwt'
-import { AppComponents, GlobalContext } from '../../types'
+import { AppComponents, CacheRecordContent, GlobalContext } from '../../types'
 
-export async function obtainChallengeHandler(): Promise<IHttpServerComponent.IResponse> {
+export async function obtainChallengeHandler(
+  context: IHttpServerComponent.DefaultContext<GlobalContext>
+): Promise<IHttpServerComponent.IResponse> {
+  const { cache, logs } = context.components
   const challenge: Challenge = await generateChallenge()
+
+  cache.put(
+    challenge.challenge,
+    {
+      complexity: challenge.complexity
+    },
+    '7d'
+  )
+
   return {
     body: { ...challenge },
     status: 200
@@ -32,10 +44,21 @@ export async function verifyChallengeHandler(
     return { status: 400, body: 'Invalid Request, body must be present with challenge, nonce and complexity' }
   }
 
+  let currentChallenge: CacheRecordContent
+
+  try {
+    currentChallenge = context.components.cache.get(toValidate.challenge, false)
+  } catch (err) {
+    context.components.logs.getLogger('LOGGER').info(err)
+
+    return { status: 401, body: 'Invalid Challenge' }
+  }
+
+  context.components.logs.getLogger('loh').info('currentChallenge ' + JSON.stringify(currentChallenge, null, 4))
+
   const isValid = await isValidChallenge(toValidate, {
-    // TODO!: Read them from memory
     challenge: toValidate.challenge,
-    complexity: toValidate.complexity
+    complexity: currentChallenge.complexity
   })
 
   if (!isValid) {

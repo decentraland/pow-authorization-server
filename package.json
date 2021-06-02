@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.23",
+    "@types/ms": "^0.7.31",
     "@types/node": "^15.0.1",
     "@typescript-eslint/eslint-plugin": "^4.23.0",
     "@typescript-eslint/parser": "^4.23.0",
@@ -47,6 +48,7 @@
     "cookie": "^0.4.1",
     "husky": "^6.0.0",
     "jsonwebtoken": "^8.5.1",
+    "ms": "^2.0.0",
     "prom-client": "^13.1.0"
   }
 }

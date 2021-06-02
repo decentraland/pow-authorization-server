@@ -1,10 +1,10 @@
 import { Lifecycle } from '@well-known-components/interfaces'
 import { Response } from 'node-fetch'
-import { AppComponents, BaseComponents } from '../../src/types'
+import { AppComponents } from '../../src/types'
 import { fetchLocalHost, startApp } from './utils/server-utils'
 
 describe('GET /public_key', () => {
-  let program: Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>
+  let program: Lifecycle.ComponentBasedProgram<AppComponents>
   beforeAll(async () => {
     program = await startApp()
   })

@@ -13,14 +13,14 @@ describe('challenge-controller-unit', () => {
 
   describe('getting a new challenge', () => {
     it('must return complexity 4', async () => {
-      const response = await obtainChallengeHandler()
+      const response = await obtainChallengeHandler({} as any)
 
       expect((response.body as any).complexity).toEqual(4)
       expect(response.status).toEqual(200)
     })
 
     it('must return a random challenge', async () => {
-      const response = await obtainChallengeHandler()
+      const response = await obtainChallengeHandler({} as any)
 
       expect((response.body as any).challenge).toBeDefined()
       expect(response.status).toEqual(200)
