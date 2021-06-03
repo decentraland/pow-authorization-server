@@ -20,10 +20,10 @@ export async function generateChallenge(): Promise<Challenge> {
   }
 }
 
-export async function isValidChallenge(solvedChallenge: SolvedChallenge, givenChallenge: Challenge): Promise<boolean> {
-  const hash = hashPhrase(givenChallenge.challenge + solvedChallenge.nonce)
+export async function isValidChallenge(solvedChallenge: SolvedChallenge): Promise<boolean> {
+  const hash = hashPhrase(solvedChallenge.challenge + solvedChallenge.nonce)
 
-  return hash.startsWith('0'.repeat(givenChallenge.complexity))
+  return hash.startsWith('0'.repeat(solvedChallenge.complexity))
 }
 
 export function matchesComplexity(solvedChallenge: SolvedChallenge, givenChallenge: Challenge) {

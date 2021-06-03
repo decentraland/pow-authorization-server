@@ -83,7 +83,7 @@ export async function verifyChallengeHandler(
     return { status: 400, body: 'The complexity does not match the expected one' }
   }
 
-  const isValid = await isValidChallenge(toValidate, challengeToMatch)
+  const isValid = await isValidChallenge(toValidate)
 
   if (!isValid) {
     return { status: 401, body: 'Invalid Challenge' }
