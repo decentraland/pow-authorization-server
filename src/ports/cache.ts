@@ -37,7 +37,11 @@ export class InMemoryCache<T = any> {
     if (refreshCache) {
       clearTimeout(this.values[key].timeoutId)
 
-      const timeoutId = setTimeout(() => this.del(key), ms(this.values[key].ttl))
+      const timeoutId = setTimeout(() => {
+        try {
+          this.del(key)
+        } catch {}
+      }, ms(this.values[key].ttl))
       this.values[key].timeoutId = timeoutId
     }
 
