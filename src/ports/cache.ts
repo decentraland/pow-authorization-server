@@ -5,16 +5,33 @@ const DEFAULT_TTL = '1m'
 interface CacheRecord<T> {
   value: T
   timeoutId: NodeJS.Timeout
-  expirationDate: number
   ttl: string
 }
 
 export class InMemoryCache<T = any> {
-  public values: Record<string, CacheRecord<T>> = {}
+  values: Record<string, CacheRecord<T>> = {}
+
+  put(key: string, value: T, ttl: string = DEFAULT_TTL): CacheRecord<T> {
+    const timeoutId = setTimeout(() => {
+      try {
+        this.del(key)
+      } catch {}
+    }, ms(ttl))
+
+    const cacheRecord: CacheRecord<T> = {
+      value,
+      timeoutId,
+      ttl
+    }
+
+    this.values[key] = cacheRecord
+
+    return cacheRecord
+  }
 
   get(key: string, refreshCache: boolean = true): T {
     if (!this.values[key]) {
-      throw new Error('Key was not found')
+      throw new Error(`The key ${key} was not found`)
     }
 
     if (refreshCache) {
@@ -27,20 +44,9 @@ export class InMemoryCache<T = any> {
     return this.values[key].value
   }
 
-  put(key: string, value: T, ttl: string = DEFAULT_TTL): void {
-    const expirationDate = Date.now() + ms(ttl)
-    const timeoutId = setTimeout(() => this.del(key), ms(ttl))
-    this.values[key] = {
-      value,
-      expirationDate,
-      timeoutId,
-      ttl
-    }
-  }
-
   del(key: string): void {
     if (!this.values[key]) {
-      throw new Error('Key not found')
+      throw new Error(`The key ${key} was not found`)
     }
 
     clearTimeout(this.values[key].timeoutId)
