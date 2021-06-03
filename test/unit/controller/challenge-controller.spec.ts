@@ -1,3 +1,4 @@
+import { IHttpServerComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
 import { obtainChallengeHandler, verifyChallengeHandler } from '../../../src/controllers/handlers/challenge-handler'
 import * as logicChallenge from '../../../src/logic/challenge'
@@ -64,60 +65,103 @@ describe('challenge-controller-unit', () => {
   describe('validating a challenge', () => {
     let cacheGetSpy: jest.SpyInstance
     const challenge = 'a'
+    const complexity = 2
 
     beforeEach(() => {
       cacheGetSpy = jest.spyOn(cache, 'get')
-      cacheGetSpy.mockReturnValue(challenge)
+      cacheGetSpy.mockReturnValue(complexity)
     })
 
     afterEach(() => {
       cacheGetSpy.mockRestore()
     })
 
-    it('when invalid must return 401', async () => {
-      const spy = jest.spyOn(logicChallenge, 'isValidChallenge')
-      spy.mockReturnValue(Promise.resolve(false))
+    describe("when the complexity doesn't match", () => {
+      let matchesComplexitySpy: jest.SpyInstance
+      let response: IHttpServerComponent.IResponse
 
-      const r = {
-        clone: () => ({
-          json: () => Promise.resolve({ complexity: 1, challenge, nonce: 'b' })
-        })
-      }
+      beforeEach(async () => {
+        matchesComplexitySpy = jest.spyOn(logicChallenge, 'matchesComplexity')
+        matchesComplexitySpy.mockReturnValue(false)
 
-      const response = await verifyChallengeHandler({
-        request: r,
-        components: { keys, cache, logs } as any
-      } as any)
+        const r = {
+          clone: () => ({
+            json: () => Promise.resolve({ complexity, challenge, nonce: 'b' })
+          })
+        }
 
-      expect(response.status).toEqual(401)
-      expect(response.body).toContain('Invalid Challenge')
+        response = await verifyChallengeHandler({
+          request: r,
+          components: { keys, cache, logs } as any
+        } as any)
+      })
+
+      afterEach(() => {
+        matchesComplexitySpy.mockRestore()
+      })
+
+      it('should return 400', () => {
+        expect(response.status).toEqual(400)
+      })
     })
 
-    it('when valid must return a jwt', async () => {
-      const spy = jest.spyOn(logicChallenge, 'isValidChallenge')
-      spy.mockReturnValue(Promise.resolve(true))
+    describe('when the complexity does match', () => {
+      let matchesComplexitySpy: jest.SpyInstance
 
-      const signJWTSpy = jest.spyOn(jwt, 'signJWT')
-      signJWTSpy.mockReturnValue('aJwt')
+      beforeEach(async () => {
+        matchesComplexitySpy = jest.spyOn(logicChallenge, 'matchesComplexity')
+        matchesComplexitySpy.mockReturnValue(true)
+      })
 
-      const getCookieSpy = jest.spyOn(cookie, 'getCookieHeader')
-      const aCookie = { 'Set-Cookie': 'aCookie' }
-      getCookieSpy.mockReturnValue(aCookie)
+      afterEach(() => {
+        matchesComplexitySpy.mockRestore()
+      })
 
-      const r = {
-        clone: () => ({
-          json: () => Promise.resolve({ complexity: 1, challenge, nonce: 'b' })
-        })
-      }
+      it('when invalid must return 401', async () => {
+        const spy = jest.spyOn(logicChallenge, 'isValidChallenge')
+        spy.mockReturnValue(Promise.resolve(false))
 
-      const response = await verifyChallengeHandler({
-        request: r,
-        components: { keys, cache, logs } as Partial<AppComponents>
-      } as any)
+        const r = {
+          clone: () => ({
+            json: () => Promise.resolve({ complexity, challenge, nonce: 'b' })
+          })
+        }
 
-      expect(response.status).toEqual(200)
-      expect((response.body as any).jwt).toEqual('aJwt')
-      expect(response.headers as any).toEqual(expect.objectContaining(aCookie))
+        const response = await verifyChallengeHandler({
+          request: r,
+          components: { keys, cache, logs } as any
+        } as any)
+
+        expect(response.status).toEqual(401)
+        expect(response.body).toContain('Invalid Challenge')
+      })
+
+      it('when valid must return a jwt', async () => {
+        const spy = jest.spyOn(logicChallenge, 'isValidChallenge')
+        spy.mockReturnValue(Promise.resolve(true))
+
+        const signJWTSpy = jest.spyOn(jwt, 'signJWT')
+        signJWTSpy.mockReturnValue('aJwt')
+
+        const getCookieSpy = jest.spyOn(cookie, 'getCookieHeader')
+        const aCookie = { 'Set-Cookie': 'aCookie' }
+        getCookieSpy.mockReturnValue(aCookie)
+
+        const r = {
+          clone: () => ({
+            json: () => Promise.resolve({ complexity: 1, challenge, nonce: 'b' })
+          })
+        }
+
+        const response = await verifyChallengeHandler({
+          request: r,
+          components: { keys, cache, logs } as Partial<AppComponents>
+        } as any)
+
+        expect(response.status).toEqual(200)
+        expect((response.body as any).jwt).toEqual('aJwt')
+        expect(response.headers as any).toEqual(expect.objectContaining(aCookie))
+      })
     })
   })
 })

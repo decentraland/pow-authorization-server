@@ -21,18 +21,13 @@ export async function generateChallenge(): Promise<Challenge> {
 }
 
 export async function isValidChallenge(solvedChallenge: SolvedChallenge, givenChallenge: Challenge): Promise<boolean> {
-  if (notMatching(solvedChallenge, givenChallenge)) {
-    return false
-  }
   const hash = hashPhrase(givenChallenge.challenge + solvedChallenge.nonce)
 
   return hash.startsWith('0'.repeat(givenChallenge.complexity))
 }
 
-function notMatching(solvedChallenge: SolvedChallenge, givenChallenge: Challenge) {
-  return (
-    solvedChallenge.challenge !== givenChallenge.challenge || solvedChallenge.complexity !== givenChallenge.complexity
-  )
+export function matchesComplexity(solvedChallenge: SolvedChallenge, givenChallenge: Challenge) {
+  return solvedChallenge.complexity === givenChallenge.complexity
 }
 
 function hashPhrase(phrase: string) {

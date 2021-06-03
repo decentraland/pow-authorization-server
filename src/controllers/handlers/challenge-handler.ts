@@ -4,6 +4,7 @@ import {
   generateChallenge,
   incompleteSolvedChallenge,
   isValidChallenge,
+  matchesComplexity,
   SolvedChallenge
 } from '../../logic/challenge'
 import { getCookieHeader } from '../../logic/cookie'
@@ -68,10 +69,16 @@ export async function verifyChallengeHandler(
     return { status: 401, body: 'Invalid Challenge' }
   }
 
-  const isValid = await isValidChallenge(toValidate, {
+  const challengeToMatch = {
     challenge: toValidate.challenge,
     complexity: currentChallenge.complexity
-  })
+  }
+
+  if (!matchesComplexity(toValidate, challengeToMatch)) {
+    return { status: 400, body: 'The complexity does not match the expected one' }
+  }
+
+  const isValid = await isValidChallenge(toValidate, challengeToMatch)
 
   if (!isValid) {
     return { status: 401, body: 'Invalid Challenge' }
