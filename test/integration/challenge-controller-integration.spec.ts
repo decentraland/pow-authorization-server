@@ -95,7 +95,7 @@ describe('POST /challenge', () => {
     })
 
     it('should respond with bad request status', () => {
-      expect(postWrongSolvedChallengeResponse.status).toEqual(401)
+      expect(postWrongSolvedChallengeResponse.status).toEqual(400)
     })
   })
 

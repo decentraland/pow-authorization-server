@@ -60,6 +60,33 @@ describe('challenge-controller-unit', () => {
         expect(cachePutSpy).toHaveBeenCalledTimes(2)
       })
     })
+
+    describe('when the challenge generated already exists three times', () => {
+      let cachePutSpy: jest.SpyInstance
+      let response: IHttpServerComponent.IResponse
+
+      beforeEach(async () => {
+        cachePutSpy = jest.spyOn(cache, 'put').mockImplementation(() => {
+          throw new Error('error')
+        })
+
+        response = await obtainChallengeHandler({
+          components: { cache, logs }
+        } as any)
+      })
+
+      afterEach(() => {
+        cachePutSpy.mockRestore()
+      })
+
+      it('should call return a 500', () => {
+        expect(response.status).toEqual(500)
+      })
+
+      it("should call return a message saying it couldn't generate the challenge", () => {
+        expect(response.body).toEqual("Couldn't generate a valid challenge please try again")
+      })
+    })
   })
 
   describe('validating a challenge', () => {

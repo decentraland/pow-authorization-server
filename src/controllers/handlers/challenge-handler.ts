@@ -34,9 +34,14 @@ export async function obtainChallengeHandler(
       break
     } catch {
       logs.getLogger('obtainChallengeHandler').info(`${challenge.challenge} key already exists`)
+      challenge = null
     }
 
     tries += 1
+  }
+
+  if (challenge == null) {
+    return { status: 500, body: "Couldn't generate a valid challenge please try again" }
   }
 
   return {
@@ -66,7 +71,7 @@ export async function verifyChallengeHandler(
   } catch (err) {
     context.components.logs.getLogger('verifyChallengeHandler').info(err)
 
-    return { status: 401, body: 'Invalid Challenge' }
+    return { status: 400, body: 'Invalid Challenge' }
   }
 
   const challengeToMatch = {
