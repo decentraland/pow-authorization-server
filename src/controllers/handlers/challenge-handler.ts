@@ -31,7 +31,9 @@ export async function obtainChallengeHandler(
       )
 
       break
-    } catch {}
+    } catch {
+      logs.getLogger('obtainChallengeHandler').info(`${challenge.challenge} key already exists`)
+    }
 
     tries += 1
   }
@@ -61,12 +63,10 @@ export async function verifyChallengeHandler(
   try {
     currentChallenge = context.components.cache.get(toValidate.challenge, false)
   } catch (err) {
-    context.components.logs.getLogger('LOGGER').info(err)
+    context.components.logs.getLogger('verifyChallengeHandler').info(err)
 
     return { status: 401, body: 'Invalid Challenge' }
   }
-
-  context.components.logs.getLogger('loh').info('currentChallenge ' + JSON.stringify(currentChallenge, null, 4))
 
   const isValid = await isValidChallenge(toValidate, {
     challenge: toValidate.challenge,
