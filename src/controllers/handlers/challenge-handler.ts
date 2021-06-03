@@ -14,15 +14,27 @@ export async function obtainChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
   const { cache, logs } = context.components
-  const challenge: Challenge = await generateChallenge()
 
-  cache.put(
-    challenge.challenge,
-    {
-      complexity: challenge.complexity
-    },
-    '7d'
-  )
+  let challenge: Challenge | null = null
+
+  let tries = 0
+  while (tries < 3) {
+    challenge = await generateChallenge()
+
+    try {
+      cache.put(
+        challenge.challenge,
+        {
+          complexity: challenge.complexity
+        },
+        '7d'
+      )
+
+      break
+    } catch {}
+
+    tries += 1
+  }
 
   return {
     body: { ...challenge },

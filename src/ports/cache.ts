@@ -12,6 +12,10 @@ export class InMemoryCache<T = any> {
   values: Record<string, CacheRecord<T>> = {}
 
   put(key: string, value: T, ttl: string = DEFAULT_TTL): CacheRecord<T> {
+    if (this.values[key] != null) {
+      throw new Error(`The key ${key} already exists`)
+    }
+
     const timeoutId = setTimeout(() => {
       try {
         this.del(key)

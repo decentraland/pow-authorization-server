@@ -34,6 +34,31 @@ describe('challenge-controller-unit', () => {
       expect((response.body as any).challenge).toBeDefined()
       expect(response.status).toEqual(200)
     })
+
+    describe('when the challenge generated already exists', () => {
+      let cachePutSpy: jest.SpyInstance
+
+      beforeEach(async () => {
+        cachePutSpy = jest
+          .spyOn(cache, 'put')
+          .mockImplementationOnce(() => {
+            throw new Error('error')
+          })
+          .mockReturnValueOnce({} as any)
+
+        await obtainChallengeHandler({
+          components: { cache, logs }
+        } as any)
+      })
+
+      afterEach(() => {
+        cachePutSpy.mockRestore()
+      })
+
+      it('should call cache twice', () => {
+        expect(cachePutSpy).toHaveBeenCalledTimes(2)
+      })
+    })
   })
 
   describe('validating a challenge', () => {
