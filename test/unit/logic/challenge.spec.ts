@@ -14,7 +14,7 @@ describe('challenge tests', () => {
     })
 
     it('should return true', async () => {
-      expect(await isValidChallenge(solved, { challenge, complexity })).toBe(true)
+      expect(await isValidChallenge(solved)).toBe(true)
     })
   })
 
@@ -31,19 +31,7 @@ describe('challenge tests', () => {
       })
 
       it('should return true', async () => {
-        expect(await isValidChallenge(solved, { challenge, complexity })).toBe(false)
-      })
-    })
-
-    describe('when the complexity is different', () => {
-      beforeAll(async () => {
-        challenge = crypto.randomBytes(20).toString('hex')
-        complexity = 3
-        solved = { challenge, complexity, nonce: 'solution' }
-      })
-
-      it('should return false', async () => {
-        expect(await isValidChallenge(solved, { challenge, complexity: 2 })).toBe(false)
+        expect(await isValidChallenge(solved)).toBe(false)
       })
     })
   })
@@ -59,7 +47,7 @@ describe('challenge tests', () => {
   async function resolveChallenge(challenge: Challenge): Promise<SolvedChallenge> {
     while (true) {
       const nonce = crypto.randomBytes(256).toString('hex')
-      const isValid = await isValidChallenge({ ...challenge, nonce }, challenge)
+      const isValid = await isValidChallenge({ ...challenge, nonce })
       if (isValid) {
         return { ...challenge, nonce }
       }

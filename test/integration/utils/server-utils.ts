@@ -2,9 +2,9 @@ import { Lifecycle } from '@well-known-components/interfaces'
 import fetch, { Response } from 'node-fetch'
 import { initComponents } from '../../../src/components'
 import { main } from '../../../src/service'
-import { AppComponents, BaseComponents } from '../../../src/types'
+import { AppComponents } from '../../../src/types'
 
-export async function startApp(): Promise<Lifecycle.ComponentBasedProgram<BaseComponents | AppComponents>> {
+export async function startApp(): Promise<Lifecycle.ComponentBasedProgram<AppComponents>> {
   return await Lifecycle.run({ main, initComponents })
 }
 

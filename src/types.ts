@@ -7,13 +7,18 @@ import type {
 } from '@well-known-components/interfaces'
 import { SigningKeys } from './logic/key-generator'
 import { metricDeclarations } from './metrics'
+import { InMemoryCache } from './ports/cache'
 
-export type GlobalContext = {
-  components: BaseComponents
+export interface CacheRecordContent {
+  complexity: number
+}
+
+export interface GlobalContext {
+  components: AppComponents
 }
 
 // components used in every environment
-export type BaseComponents = {
+export interface BaseComponents {
   config: IConfigComponent
   logs: ILoggerComponent
   server: IHttpServerComponent<GlobalContext>
@@ -22,9 +27,7 @@ export type BaseComponents = {
 }
 
 // components used in runtime
-export type AppComponents = BaseComponents & {
+export interface AppComponents extends BaseComponents {
   statusChecks: IBaseComponent
+  cache: InMemoryCache<CacheRecordContent>
 }
-
-// components used in tests
-export type TestComponents = BaseComponents

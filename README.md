@@ -3,6 +3,7 @@
 This service exposes an API to authenticate requests using Proof of work.
 
 Auth server creates a challenge that the client needs to solve using Proof Of Work. The challenge consists of:
+
 - Complexity: number
 - Challenge: string
 
@@ -30,21 +31,7 @@ complexity: number = response.body.complexity
 
 2. Generate challenge:
 
-```typescript
-import * as crypto from 'crypto'
-
-function generateNonceForChallenge(challenge: string, complexity: number): string {
-  while (true) {
-    const nonce = crypto.randomBytes(256).toString('hex')
-    const hash = crypto.createHash(sha256).update(challenge + nonce, 'hex').digest('hex')
-    const isValid = hash.startsWith('0'.repeat(complexity))
-
-    if (isValid) {
-      return nonce
-    }
-  }
-}
-```
+run `node utils/solveChallenge.js <challenge> <complexity>`
 
 3. Obtain JWT:
 
@@ -58,11 +45,10 @@ jwtCookieHeader = response.headers['Set-Cookie']
 
 [You can find all API documentation here.](docs/API/AUTH_API.md)
 
-
-
 ## Environment Variables
 
 - `SECRETS_DIRECTORY`: Path of the folder where the file `public_key.pem` will be stored when the app starts.
+
 ## Architecture
 
 Extension of "ports and adapters architecture", also known as "hexagonal architecture".
