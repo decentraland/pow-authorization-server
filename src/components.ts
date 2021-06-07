@@ -6,7 +6,7 @@ import { generateSigningKeys } from './logic/key-generator'
 import { metricDeclarations } from './metrics'
 import { createCache } from './ports/cache'
 import { writeToFile } from './ports/local_storage'
-import { AppComponents, GlobalContext } from './types'
+import { AppComponents, GlobalContext, USER_THRESHOLD_KEY } from './types'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -17,6 +17,8 @@ export async function initComponents(): Promise<AppComponents> {
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const keys = generateSigningKeys()
   const cache = createCache()
+
+  cache.put(USER_THRESHOLD_KEY, 0, '7d')
 
   const dir = (await config.getString('SECRETS_DIRECTORY')) || 'etc/secrets'
   writeToFile(dir, 'public_key.pem', keys.publicKey)

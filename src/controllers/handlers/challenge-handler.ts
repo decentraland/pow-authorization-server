@@ -2,6 +2,7 @@ import { IHttpServerComponent } from '@well-known-components/interfaces'
 import {
   Challenge,
   generateChallenge,
+  getChallengeComplexity,
   incompleteSolvedChallenge,
   isValidChallenge,
   matchesComplexity,
@@ -9,7 +10,7 @@ import {
 } from '../../logic/challenge'
 import { getCookieHeader } from '../../logic/cookie'
 import { signJWT } from '../../logic/jwt'
-import { AppComponents, CacheRecordContent, GlobalContext } from '../../types'
+import { AppComponents, CacheRecordContent, COMPLEXITY_KEY, GlobalContext, USER_THRESHOLD_KEY } from '../../types'
 
 export async function obtainChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
@@ -18,9 +19,23 @@ export async function obtainChallengeHandler(
 
   let challenge: Challenge | null = null
 
+  const currentComplexity = cache.get(COMPLEXITY_KEY) as number
+
+  const complexity = getChallengeComplexity(
+    cache.getKeyCount(),
+    cache.get(USER_THRESHOLD_KEY) as number,
+    currentComplexity,
+    4,
+    10
+  )
+
+  if (currentComplexity !== complexity) {
+    cache.put(COMPLEXITY_KEY, cache.getKeyCount(), '7d')
+  }
+
   let tries = 0
   while (tries < 3) {
-    challenge = await generateChallenge()
+    challenge = await generateChallenge(complexity)
 
     try {
       cache.put(
@@ -67,7 +82,7 @@ export async function verifyChallengeHandler(
   let currentChallenge: CacheRecordContent
 
   try {
-    currentChallenge = context.components.cache.get(toValidate.challenge, false)
+    currentChallenge = context.components.cache.get(toValidate.challenge, false) as Challenge
   } catch (err) {
     context.components.logs.getLogger('verifyChallengeHandler').info(err)
 

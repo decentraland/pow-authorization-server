@@ -29,5 +29,8 @@ export interface BaseComponents {
 // components used in runtime
 export interface AppComponents extends BaseComponents {
   statusChecks: IBaseComponent
-  cache: InMemoryCache<CacheRecordContent>
+  cache: InMemoryCache<CacheRecordContent | number>
 }
+
+export const USER_THRESHOLD_KEY = '__dcl__User Threshold'
+export const COMPLEXITY_KEY = '__dcl__Complexity'
