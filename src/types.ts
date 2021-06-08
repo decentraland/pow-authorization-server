@@ -32,5 +32,9 @@ export interface AppComponents extends BaseComponents {
   cache: InMemoryCache<CacheRecordContent | number>
 }
 
+export const SECRETS_DIRECTORY_VARIABLE = 'SECRETS_DIRECTORY'
+export const DEFAULT_MAX_COMPLEXITY_VARIABLE = 'DEFAULT_MAX_COMPLEXITY'
+export const DEFAULT_MIN_COMPLEXITY_VARIABLE = 'DEFAULT_MIN_COMPLEXITY'
+export const DEFAULT_MIN_USERS_VARIABLE = 'DEFAULT_MIN_USERS'
 export const USER_THRESHOLD_KEY = '__dcl__User Threshold'
 export const COMPLEXITY_KEY = '__dcl__Complexity'

@@ -1,4 +1,4 @@
-import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { IHttpServerComponent, ILoggerComponent } from '@well-known-components/interfaces'
 import {
   Challenge,
   generateChallenge,
@@ -10,12 +10,22 @@ import {
 } from '../../logic/challenge'
 import { getCookieHeader } from '../../logic/cookie'
 import { signJWT } from '../../logic/jwt'
-import { AppComponents, CacheRecordContent, COMPLEXITY_KEY, GlobalContext, USER_THRESHOLD_KEY } from '../../types'
+import { InMemoryCache } from '../../ports/cache'
+import {
+  AppComponents,
+  CacheRecordContent,
+  COMPLEXITY_KEY,
+  DEFAULT_MAX_COMPLEXITY_VARIABLE,
+  DEFAULT_MIN_COMPLEXITY_VARIABLE,
+  DEFAULT_MIN_USERS_VARIABLE,
+  GlobalContext,
+  USER_THRESHOLD_KEY
+} from '../../types'
 
 export async function obtainChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
-  const { cache, logs } = context.components
+  const { cache, logs, config } = context.components
 
   let challenge: Challenge | null = null
 
@@ -25,13 +35,14 @@ export async function obtainChallengeHandler(
     cache.getKeyCount(),
     cache.get(USER_THRESHOLD_KEY) as number,
     currentComplexity,
-    4,
-    10
+    (await config.getNumber(DEFAULT_MIN_COMPLEXITY_VARIABLE)) as number,
+    (await config.getNumber(DEFAULT_MAX_COMPLEXITY_VARIABLE)) as number
   )
 
-  if (currentComplexity !== complexity) {
-    cache.put(COMPLEXITY_KEY, cache.getKeyCount(), '7d')
-  }
+  const minUsers = (await config.getNumber(DEFAULT_MIN_USERS_VARIABLE)) as number
+  const logger = logs.getLogger('obtainChallengeHandler')
+
+  updateCacheComplexity(currentComplexity, complexity, cache, minUsers, logger)
 
   let tries = 0
   while (tries < 3) {
@@ -66,6 +77,28 @@ export async function obtainChallengeHandler(
 }
 
 export type VerifyChallengeComponents = Pick<AppComponents, 'keys'>
+
+function updateCacheComplexity(
+  currentComplexity: number,
+  newComplexity: number,
+  cache: InMemoryCache<number | CacheRecordContent>,
+  minUsers: number,
+  logger: ILoggerComponent.ILogger
+) {
+  if (currentComplexity === newComplexity) {
+    return
+  }
+
+  const newUserCount = Math.max(cache.getKeyCount(), minUsers)
+
+  logger.info(`Changed complexity from ${currentComplexity} to ${newComplexity}`)
+  logger.info(`Changed users from from ${cache.get(USER_THRESHOLD_KEY)} to ${newUserCount}`)
+  cache.del(COMPLEXITY_KEY)
+  cache.del(USER_THRESHOLD_KEY)
+  cache.put(COMPLEXITY_KEY, newComplexity, '7d')
+  cache.put(USER_THRESHOLD_KEY, newUserCount, '7d')
+}
+
 export async function verifyChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {

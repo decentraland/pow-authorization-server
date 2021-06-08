@@ -1,7 +1,8 @@
-import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { IConfigComponent, IHttpServerComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
 import { obtainChallengeHandler, verifyChallengeHandler } from '../../../src/controllers/handlers/challenge-handler'
 import * as logicChallenge from '../../../src/logic/challenge'
+import { createAndInitializeConfigComponent } from '../../../src/logic/componentsUtils'
 import * as cookie from '../../../src/logic/cookie'
 import * as jwt from '../../../src/logic/jwt'
 import { generateSigningKeys, SigningKeys } from '../../../src/logic/key-generator'
@@ -10,17 +11,20 @@ import { AppComponents } from '../../../src/types'
 
 describe('challenge-controller-unit', () => {
   let keys: SigningKeys
-  const cache = cacheModule.createCache()
+  let cache: cacheModule.InMemoryCache
   const logs = createLogComponent()
+  let config: IConfigComponent
 
-  beforeEach(() => {
+  beforeEach(async () => {
     keys = generateSigningKeys()
+    config = await createAndInitializeConfigComponent()
+    cache = await cacheModule.createAndInitializeCache(config)
   })
 
   describe('getting a new challenge', () => {
     it('must return complexity 4', async () => {
       const response = await obtainChallengeHandler({
-        components: { cache, logs }
+        components: { cache, logs, config }
       } as any)
 
       expect((response.body as any).complexity).toEqual(4)
@@ -119,7 +123,7 @@ describe('challenge-controller-unit', () => {
 
         response = await verifyChallengeHandler({
           request: r,
-          components: { keys, cache, logs } as any
+          components: { keys, cache, logs, config } as any
         } as any)
       })
 
@@ -156,7 +160,7 @@ describe('challenge-controller-unit', () => {
 
         const response = await verifyChallengeHandler({
           request: r,
-          components: { keys, cache, logs } as any
+          components: { keys, cache, logs, config } as any
         } as any)
 
         expect(response.status).toEqual(401)

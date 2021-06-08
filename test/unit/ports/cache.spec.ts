@@ -1,5 +1,12 @@
+import { IConfigComponent } from '@well-known-components/interfaces'
+import { createAndInitializeCache, InMemoryCache } from '../../../src/ports/cache'
+import {
+  COMPLEXITY_KEY,
+  DEFAULT_MIN_COMPLEXITY_VARIABLE,
+  DEFAULT_MIN_USERS_VARIABLE,
+  USER_THRESHOLD_KEY
+} from '../../../src/types'
 import ms = require('ms')
-import { createCache, InMemoryCache } from '../../../src/ports/cache'
 
 describe('cache', () => {
   let cache: InMemoryCache
@@ -15,10 +22,48 @@ describe('cache', () => {
 
   let setTimeoutSpy: jest.SpyInstance
   let clearTimeoutSpy: jest.SpyInstance
+  const minComplexity = 1
+  const minUsers = 2
+
+  let config: IConfigComponent
+
+  beforeEach(() => {
+    config = {
+      getNumber: jest.fn().mockImplementation((variable: string): Promise<number> => {
+        if (variable === DEFAULT_MIN_COMPLEXITY_VARIABLE) {
+          return Promise.resolve(minComplexity)
+        }
+        if (variable === DEFAULT_MIN_USERS_VARIABLE) {
+          return Promise.resolve(minUsers)
+        }
+
+        return Promise.resolve(5)
+      })
+    } as any as IConfigComponent
+  })
+
+  describe('calling createAndInitializeCache', () => {
+    beforeEach(async () => {
+      cache = await createAndInitializeCache(config)
+    })
+
+    afterEach(() => {
+      cache.del(COMPLEXITY_KEY)
+      cache.del(USER_THRESHOLD_KEY)
+    })
+
+    it('should initialize the COMPLEXITY_KEY with the minimum complexity', () => {
+      expect(cache.get(COMPLEXITY_KEY)).toEqual(minComplexity)
+    })
+
+    it('should initialize the USER_THRESHOLD_KEY with the default users', () => {
+      expect(cache.get(USER_THRESHOLD_KEY)).toEqual(minUsers)
+    })
+  })
 
   describe('adding a key to a cache', () => {
-    beforeEach(() => {
-      cache = createCache()
+    beforeEach(async () => {
+      cache = await createAndInitializeCache(config)
       setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
       clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
@@ -52,8 +97,8 @@ describe('cache', () => {
     })
 
     describe('if the key is not present', () => {
-      beforeEach(() => {
-        cache = createCache()
+      beforeEach(async () => {
+        cache = await createAndInitializeCache(config)
       })
 
       it('should throw an exception', () => {
@@ -64,8 +109,8 @@ describe('cache', () => {
     describe('if the key is present', () => {
       let timeoutId: NodeJS.Timeout
 
-      beforeEach(() => {
-        cache = createCache()
+      beforeEach(async () => {
+        cache = await createAndInitializeCache(config)
 
         const response = cache.put(key1, value1, ttl)
         timeoutId = response.timeoutId
@@ -86,11 +131,11 @@ describe('cache', () => {
 
   describe('obtaining the value for a key', () => {
     describe('if the key is not present', () => {
-      beforeEach(() => {
+      beforeEach(async () => {
         setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
         clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-        cache = createCache()
+        cache = await createAndInitializeCache(config)
       })
 
       afterEach(() => {
@@ -109,11 +154,11 @@ describe('cache', () => {
       describe('if it should refresh the cache', () => {
         let timeoutId: NodeJS.Timeout
 
-        beforeEach(() => {
+        beforeEach(async () => {
           setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
           clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-          cache = createCache()
+          cache = await createAndInitializeCache(config)
           const response = cache.put(key1, value1, ttl)
           timeoutId = response.timeoutId
 
@@ -131,8 +176,9 @@ describe('cache', () => {
         })
 
         it('should set timeout to delete the cache', () => {
+          // the first 2 calls are performed by the initialization of Complexity and Users
           // the first call is performed in the put, but this test is not asserting over it
-          expect(setTimeoutSpy).toHaveBeenCalledTimes(2)
+          expect(setTimeoutSpy).toHaveBeenCalledTimes(4)
           expect(setTimeoutSpy).toHaveBeenNthCalledWith(2, expect.any(Function), ms(ttl))
         })
 
@@ -142,11 +188,11 @@ describe('cache', () => {
       })
 
       describe('if it should not refresh the cache', () => {
-        beforeEach(() => {
+        beforeEach(async () => {
           setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
           clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-          cache = createCache()
+          cache = await createAndInitializeCache(config)
           cache.put(key2, value2, ttl)
 
           value = cache.get(key2, false)

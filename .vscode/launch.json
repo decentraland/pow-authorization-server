@@ -27,7 +27,7 @@
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
-        "test/integration/challenge-controller-integration.spec.ts"
+        "test/unit/controller/challenge-controller.spec.ts"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
