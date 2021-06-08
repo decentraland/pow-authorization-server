@@ -33,7 +33,7 @@ describe('challenge-controller-unit', () => {
 
     it('must return a random challenge', async () => {
       const response = await obtainChallengeHandler({
-        components: { cache, logs }
+        components: { cache, logs, config }
       } as any)
 
       expect((response.body as any).challenge).toBeDefined()
@@ -52,7 +52,7 @@ describe('challenge-controller-unit', () => {
           .mockReturnValueOnce({} as any)
 
         await obtainChallengeHandler({
-          components: { cache, logs }
+          components: { cache, logs, config }
         } as any)
       })
 
@@ -75,7 +75,7 @@ describe('challenge-controller-unit', () => {
         })
 
         response = await obtainChallengeHandler({
-          components: { cache, logs }
+          components: { cache, logs, config }
         } as any)
       })
 
