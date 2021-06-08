@@ -68,3 +68,21 @@ export function getChallengeComplexity(
 
   return currentComplexity
 }
+
+export function getChallengeComplexity2(
+  currentUserCount: number,
+  complexityThresholdMap: Record<number, number>,
+  minComplexity: number,
+  maxComplexity: number
+): number {
+  const thresholds = Object.keys(complexityThresholdMap).map((threshold) => parseInt(threshold))
+
+  const sortedThresholds = thresholds.sort((a, b) => b - a)
+  const filteredThresholds = sortedThresholds.filter((x) => x < currentUserCount)
+
+  if (filteredThresholds.length === 0) {
+    return minComplexity
+  }
+
+  return Math.min(maxComplexity, complexityThresholdMap[filteredThresholds[0]])
+}

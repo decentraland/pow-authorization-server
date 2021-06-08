@@ -1,10 +1,3 @@
-import { IConfigComponent } from '@well-known-components/interfaces'
-import {
-  COMPLEXITY_KEY,
-  DEFAULT_MIN_COMPLEXITY_VARIABLE,
-  DEFAULT_MIN_USERS_VARIABLE,
-  USER_THRESHOLD_KEY
-} from '../types'
 import ms = require('ms')
 
 const DEFAULT_TTL = '1m'
@@ -73,10 +66,8 @@ export class InMemoryCache<T = any> {
   }
 }
 
-export async function createAndInitializeCache(config: IConfigComponent): Promise<InMemoryCache> {
+export async function createAndInitializeCache(): Promise<InMemoryCache> {
   const cache = new InMemoryCache()
-  cache.put(COMPLEXITY_KEY, (await config.getNumber(DEFAULT_MIN_COMPLEXITY_VARIABLE)) as number)
-  cache.put(USER_THRESHOLD_KEY, (await config.getNumber(DEFAULT_MIN_USERS_VARIABLE)) as number, '7d')
 
   return cache
 }

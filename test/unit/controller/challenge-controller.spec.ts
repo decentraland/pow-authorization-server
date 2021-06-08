@@ -2,29 +2,31 @@ import { IConfigComponent, IHttpServerComponent } from '@well-known-components/i
 import { createLogComponent } from '@well-known-components/logger'
 import { obtainChallengeHandler, verifyChallengeHandler } from '../../../src/controllers/handlers/challenge-handler'
 import * as logicChallenge from '../../../src/logic/challenge'
-import { createAndInitializeConfigComponent } from '../../../src/logic/componentsUtils'
+import { createAndInitializeConfigComponent, parseRangesVariables } from '../../../src/logic/componentsUtils'
 import * as cookie from '../../../src/logic/cookie'
 import * as jwt from '../../../src/logic/jwt'
 import { generateSigningKeys, SigningKeys } from '../../../src/logic/key-generator'
 import * as cacheModule from '../../../src/ports/cache'
-import { AppComponents, COMPLEXITY_KEY, DEFAULT_MIN_USERS_VARIABLE, USER_THRESHOLD_KEY } from '../../../src/types'
+import { AppComponents, COMPLEXITY_RANGES_VARIABLE } from '../../../src/types'
 
 describe('challenge-controller-unit', () => {
   let keys: SigningKeys
   let cache: cacheModule.InMemoryCache
   const logs = createLogComponent()
   let config: IConfigComponent
+  let complexityRanges: Record<number, number>
 
   beforeEach(async () => {
     keys = generateSigningKeys()
     config = await createAndInitializeConfigComponent()
-    cache = await cacheModule.createAndInitializeCache(config)
+    complexityRanges = parseRangesVariables((await config.getString(COMPLEXITY_RANGES_VARIABLE)) || '')
+    cache = await cacheModule.createAndInitializeCache()
   })
 
   describe('getting a new challenge', () => {
     it('must return complexity 4', async () => {
       const response = await obtainChallengeHandler({
-        components: { cache, logs, config }
+        components: { cache, logs, config, complexityRanges }
       } as any)
 
       expect((response.body as any).complexity).toEqual(4)
@@ -33,7 +35,7 @@ describe('challenge-controller-unit', () => {
 
     it('must return a random challenge', async () => {
       const response = await obtainChallengeHandler({
-        components: { cache, logs, config }
+        components: { cache, logs, config, complexityRanges }
       } as any)
 
       expect((response.body as any).challenge).toBeDefined()
@@ -52,7 +54,7 @@ describe('challenge-controller-unit', () => {
           .mockReturnValueOnce({} as any)
 
         await obtainChallengeHandler({
-          components: { cache, logs, config }
+          components: { cache, logs, config, complexityRanges }
         } as any)
       })
 
@@ -75,7 +77,7 @@ describe('challenge-controller-unit', () => {
         })
 
         response = await obtainChallengeHandler({
-          components: { cache, logs, config }
+          components: { cache, logs, config, complexityRanges }
         } as any)
       })
 
@@ -89,41 +91,6 @@ describe('challenge-controller-unit', () => {
 
       it("should call return a message saying it couldn't generate the challenge", () => {
         expect(response.body).toEqual("Couldn't generate a valid challenge please try again")
-      })
-    })
-
-    describe('when the complexity is different than the one already existent', () => {
-      let getChallengeComplexitySpy: jest.SpyInstance
-      let cachePutSpy: jest.SpyInstance
-      let cacheDelSpy: jest.SpyInstance
-      const newComplexity = 1000
-
-      beforeEach(async () => {
-        getChallengeComplexitySpy = jest.spyOn(logicChallenge, 'getChallengeComplexity').mockReturnValue(newComplexity)
-
-        cachePutSpy = jest.spyOn(cache, 'put').mockReturnValue({} as any)
-        cacheDelSpy = jest.spyOn(cache, 'del').mockImplementation(jest.fn())
-
-        await obtainChallengeHandler({
-          components: { cache, logs, config }
-        } as any)
-      })
-
-      afterEach(() => {
-        cacheDelSpy.mockRestore()
-        cachePutSpy.mockRestore()
-        getChallengeComplexitySpy.mockRestore()
-      })
-
-      it('should update the cache complexity to reflect the new one', async () => {
-        const minUsers = (await config.getNumber(DEFAULT_MIN_USERS_VARIABLE)) as number
-
-        expect(cacheDelSpy).toHaveBeenCalledWith(COMPLEXITY_KEY)
-        expect(cacheDelSpy).toHaveBeenCalledWith(USER_THRESHOLD_KEY)
-
-        // console.log("cache.put", cache.put)
-        expect(cachePutSpy).toHaveBeenCalledWith(COMPLEXITY_KEY, newComplexity, '7d')
-        expect(cachePutSpy).toHaveBeenCalledWith(USER_THRESHOLD_KEY, minUsers, '7d')
       })
     })
   })

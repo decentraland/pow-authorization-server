@@ -3,6 +3,7 @@ import {
   Challenge,
   generateChallenge,
   getChallengeComplexity,
+  getChallengeComplexity2,
   isValidChallenge,
   SolvedChallenge
 } from '../../../src/logic/challenge'
@@ -117,6 +118,68 @@ describe('challenge tests', () => {
 
       it('should return the same complexity', () => {
         expect(result).toEqual(currentComplexity)
+      })
+    })
+  })
+
+  describe('getChallengeComplexity2', () => {
+    const thresholds = {
+      200: 4,
+      600: 5,
+      1200: 6,
+      2000: 7
+    }
+
+    describe('when the current count is within a range', () => {
+      let result: number
+
+      beforeEach(() => {
+        result = getChallengeComplexity2(650, thresholds, 0, 1000)
+      })
+
+      it('should return the lower bound of the range', () => {
+        expect(result).toEqual(5)
+      })
+    })
+
+    describe('when the current count is lower than the minimum of the first range', () => {
+      let result: number
+      const minimum = 0
+
+      beforeEach(() => {
+        result = getChallengeComplexity2(1, thresholds, minimum, 1000)
+      })
+
+      it('should return the lower minimum', () => {
+        expect(result).toEqual(minimum)
+      })
+    })
+
+    describe('when the current count is higher than the maximum of the last range', () => {
+      describe('and the highest complexity is higher than the maximum allowed', () => {
+        let result: number
+        const maximum = 6
+
+        beforeEach(() => {
+          result = getChallengeComplexity2(2500, thresholds, -1, maximum)
+        })
+
+        it('should return the maximum', () => {
+          expect(result).toEqual(maximum)
+        })
+      })
+
+      describe('and the highest complexity is the same or lower than the maximum allowed', () => {
+        let result: number
+        const maximum = 1000
+
+        beforeEach(() => {
+          result = getChallengeComplexity2(2500, thresholds, -1, maximum)
+        })
+
+        it('should return the maximum', () => {
+          expect(result).toEqual(7)
+        })
       })
     })
   })

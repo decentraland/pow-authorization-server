@@ -1,12 +1,12 @@
 import { createServerComponent, createStatusCheckComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
 import { createMetricsComponent } from '@well-known-components/metrics'
-import { createAndInitializeConfigComponent } from './logic/componentsUtils'
+import { createAndInitializeConfigComponent, parseRangesVariables } from './logic/componentsUtils'
 import { generateSigningKeys } from './logic/key-generator'
 import { metricDeclarations } from './metrics'
 import { createAndInitializeCache } from './ports/cache'
 import { writeToFile } from './ports/local_storage'
-import { AppComponents, GlobalContext, SECRETS_DIRECTORY_VARIABLE } from './types'
+import { AppComponents, COMPLEXITY_RANGES_VARIABLE, GlobalContext, SECRETS_DIRECTORY_VARIABLE } from './types'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -16,8 +16,9 @@ export async function initComponents(): Promise<AppComponents> {
   const statusChecks = await createStatusCheckComponent({ server })
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const keys = generateSigningKeys()
+  const complexityRanges = parseRangesVariables((await config.getString(COMPLEXITY_RANGES_VARIABLE)) as string)
 
-  const cache = await createAndInitializeCache(config)
+  const cache = await createAndInitializeCache()
 
   const dir: string = (await config.getString(SECRETS_DIRECTORY_VARIABLE)) as string
   writeToFile(dir, 'public_key.pem', keys.publicKey)
@@ -29,6 +30,7 @@ export async function initComponents(): Promise<AppComponents> {
     statusChecks,
     metrics,
     keys,
-    cache
+    cache,
+    complexityRanges
   }
 }

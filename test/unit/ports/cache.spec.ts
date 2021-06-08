@@ -1,11 +1,4 @@
-import { IConfigComponent } from '@well-known-components/interfaces'
 import { createAndInitializeCache, InMemoryCache } from '../../../src/ports/cache'
-import {
-  COMPLEXITY_KEY,
-  DEFAULT_MIN_COMPLEXITY_VARIABLE,
-  DEFAULT_MIN_USERS_VARIABLE,
-  USER_THRESHOLD_KEY
-} from '../../../src/types'
 import ms = require('ms')
 
 describe('cache', () => {
@@ -25,45 +18,9 @@ describe('cache', () => {
   const minComplexity = 1
   const minUsers = 2
 
-  let config: IConfigComponent
-
-  beforeEach(() => {
-    config = {
-      getNumber: jest.fn().mockImplementation((variable: string): Promise<number> => {
-        if (variable === DEFAULT_MIN_COMPLEXITY_VARIABLE) {
-          return Promise.resolve(minComplexity)
-        }
-        if (variable === DEFAULT_MIN_USERS_VARIABLE) {
-          return Promise.resolve(minUsers)
-        }
-
-        return Promise.resolve(5)
-      })
-    } as any as IConfigComponent
-  })
-
-  describe('calling createAndInitializeCache', () => {
-    beforeEach(async () => {
-      cache = await createAndInitializeCache(config)
-    })
-
-    afterEach(() => {
-      cache.del(COMPLEXITY_KEY)
-      cache.del(USER_THRESHOLD_KEY)
-    })
-
-    it('should initialize the COMPLEXITY_KEY with the minimum complexity', () => {
-      expect(cache.get(COMPLEXITY_KEY)).toEqual(minComplexity)
-    })
-
-    it('should initialize the USER_THRESHOLD_KEY with the default users', () => {
-      expect(cache.get(USER_THRESHOLD_KEY)).toEqual(minUsers)
-    })
-  })
-
   describe('adding a key to a cache', () => {
     beforeEach(async () => {
-      cache = await createAndInitializeCache(config)
+      cache = await createAndInitializeCache()
       setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
       clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
@@ -98,7 +55,7 @@ describe('cache', () => {
 
     describe('if the key is not present', () => {
       beforeEach(async () => {
-        cache = await createAndInitializeCache(config)
+        cache = await createAndInitializeCache()
       })
 
       it('should throw an exception', () => {
@@ -110,7 +67,7 @@ describe('cache', () => {
       let timeoutId: NodeJS.Timeout
 
       beforeEach(async () => {
-        cache = await createAndInitializeCache(config)
+        cache = await createAndInitializeCache()
 
         const response = cache.put(key1, value1, ttl)
         timeoutId = response.timeoutId
@@ -135,7 +92,7 @@ describe('cache', () => {
         setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
         clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-        cache = await createAndInitializeCache(config)
+        cache = await createAndInitializeCache()
       })
 
       afterEach(() => {
@@ -158,7 +115,7 @@ describe('cache', () => {
           setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
           clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-          cache = await createAndInitializeCache(config)
+          cache = await createAndInitializeCache()
           const response = cache.put(key1, value1, ttl)
           timeoutId = response.timeoutId
 
@@ -176,9 +133,8 @@ describe('cache', () => {
         })
 
         it('should set timeout to delete the cache', () => {
-          // the first 2 calls are performed by the initialization of Complexity and Users
           // the first call is performed in the put, but this test is not asserting over it
-          expect(setTimeoutSpy).toHaveBeenCalledTimes(4)
+          expect(setTimeoutSpy).toHaveBeenCalledTimes(2)
           expect(setTimeoutSpy).toHaveBeenNthCalledWith(2, expect.any(Function), ms(ttl))
         })
 
@@ -192,7 +148,7 @@ describe('cache', () => {
           setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
           clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-          cache = await createAndInitializeCache(config)
+          cache = await createAndInitializeCache()
           cache.put(key2, value2, ttl)
 
           value = cache.get(key2, false)

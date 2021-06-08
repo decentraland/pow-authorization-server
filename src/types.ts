@@ -30,12 +30,10 @@ export interface BaseComponents {
 export interface AppComponents extends BaseComponents {
   statusChecks: IBaseComponent
   cache: InMemoryCache<CacheRecordContent | number>
+  complexityRanges: Record<number, number>
 }
 
 export const SECRETS_DIRECTORY_VARIABLE = 'SECRETS_DIRECTORY'
-export const RATIO_TO_INCREASE_COMPLEXITY_VARIABLE = 'RATIO_TO_INCREASE_COMPLEXITY_VARIABLE'
+export const COMPLEXITY_RANGES_VARIABLE = 'COMPLEXITY_RANGES'
 export const DEFAULT_MAX_COMPLEXITY_VARIABLE = 'DEFAULT_MAX_COMPLEXITY'
 export const DEFAULT_MIN_COMPLEXITY_VARIABLE = 'DEFAULT_MIN_COMPLEXITY'
-export const DEFAULT_MIN_USERS_VARIABLE = 'DEFAULT_MIN_USERS'
-export const USER_THRESHOLD_KEY = '__dcl__User Threshold'
-export const COMPLEXITY_KEY = '__dcl__Complexity'
