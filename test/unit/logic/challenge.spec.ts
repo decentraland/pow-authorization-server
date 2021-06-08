@@ -1,5 +1,11 @@
 import * as crypto from 'crypto'
-import { Challenge, generateChallenge, isValidChallenge, SolvedChallenge } from '../../../src/logic/challenge'
+import {
+  Challenge,
+  generateChallenge,
+  getChallengeComplexity,
+  isValidChallenge,
+  SolvedChallenge
+} from '../../../src/logic/challenge'
 
 describe('challenge tests', () => {
   describe('when the challenge is valid', () => {
@@ -41,6 +47,77 @@ describe('challenge tests', () => {
       expect(await generateChallenge()).toEqual(
         expect.objectContaining({ complexity: expect.any(Number), challenge: expect.any(String) })
       )
+    })
+  })
+
+  describe('getChallengeComplexity', () => {
+    describe('when the current count is a ratio times smaller than the threshold', () => {
+      describe('and the new complexity is the same or greater than the minimum allowed', () => {
+        let result: number
+        const currentComplexity = 1000
+
+        beforeEach(() => {
+          result = getChallengeComplexity(1, 10, currentComplexity, 0, 100000, 5)
+        })
+
+        it('should decrease the complexity', () => {
+          expect(result).toEqual(currentComplexity - 1)
+        })
+      })
+
+      describe('and the new complexity is lower than the minimum allowed', () => {
+        let result: number
+        const currentComplexity = 1000
+
+        beforeEach(() => {
+          result = getChallengeComplexity(1, 10, currentComplexity, currentComplexity, 100000, 5)
+        })
+
+        it('should return the minimum complexity', () => {
+          expect(result).toEqual(currentComplexity)
+        })
+      })
+    })
+
+    describe('and the current count is a ratio times greater than the threshold', () => {
+      describe('and the new complexity is greater than the maximum allowed', () => {
+        let result: number
+        const currentComplexity = 1000
+
+        beforeEach(() => {
+          result = getChallengeComplexity(100, 10, currentComplexity, 0, currentComplexity, 5)
+        })
+
+        it('should return the max complexity', () => {
+          expect(result).toEqual(currentComplexity)
+        })
+      })
+
+      describe('and the new complexity is lower or the same than the maximum allowed', () => {
+        let result: number
+        const currentComplexity = 1000
+
+        beforeEach(() => {
+          result = getChallengeComplexity(100, 10, currentComplexity, 0, currentComplexity + 1, 5)
+        })
+
+        it('should increase the complexity', () => {
+          expect(result).toEqual(currentComplexity + 1)
+        })
+      })
+    })
+
+    describe('when the current count is within the bounds of the ratio of the threshold', () => {
+      let result: number
+      const currentComplexity = 1000
+
+      beforeEach(() => {
+        result = getChallengeComplexity(10, 100, currentComplexity, 0, 100000, 10)
+      })
+
+      it('should return the same complexity', () => {
+        expect(result).toEqual(currentComplexity)
+      })
     })
   })
 

@@ -53,15 +53,16 @@ export function getChallengeComplexity(
   previousUserThreshold: number,
   currentComplexity: number,
   minComplexity: number,
-  maxComplexity: number
+  maxComplexity: number,
+  ratioToModifyComplexity: number
 ): number {
   // The current user count is an order of magnitude greater than the threshold
-  if (currentUserCount / previousUserThreshold > 10) {
+  if (currentUserCount / previousUserThreshold > ratioToModifyComplexity) {
     return Math.min(maxComplexity, currentComplexity + 1)
   }
 
   // The current user count is an order of magnitude lower than the threshold
-  if (previousUserThreshold / currentUserCount > 10) {
+  if (previousUserThreshold / currentUserCount > ratioToModifyComplexity) {
     return Math.max(minComplexity, currentComplexity - 1)
   }
 

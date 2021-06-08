@@ -19,6 +19,7 @@ import {
   DEFAULT_MIN_COMPLEXITY_VARIABLE,
   DEFAULT_MIN_USERS_VARIABLE,
   GlobalContext,
+  RATIO_TO_INCREASE_COMPLEXITY_VARIABLE,
   USER_THRESHOLD_KEY
 } from '../../types'
 
@@ -36,7 +37,8 @@ export async function obtainChallengeHandler(
     cache.get(USER_THRESHOLD_KEY) as number,
     currentComplexity,
     (await config.getNumber(DEFAULT_MIN_COMPLEXITY_VARIABLE)) as number,
-    (await config.getNumber(DEFAULT_MAX_COMPLEXITY_VARIABLE)) as number
+    (await config.getNumber(DEFAULT_MAX_COMPLEXITY_VARIABLE)) as number,
+    (await config.getNumber(RATIO_TO_INCREASE_COMPLEXITY_VARIABLE)) as number
   )
 
   const minUsers = (await config.getNumber(DEFAULT_MIN_USERS_VARIABLE)) as number
