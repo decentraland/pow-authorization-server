@@ -38,42 +38,9 @@ export function incompleteSolvedChallenge(toValidate: Partial<SolvedChallenge>):
   return toValidate.challenge === undefined || toValidate.complexity === undefined || toValidate.nonce === undefined
 }
 
-/**
- * Returns the according challenge complexity based on the current users
- *
- * @param currentUserCount Amount of keys in the cache (each for every user connected)
- * @param previousUserThreshold The threshold is the number of users required to perform a complexity switch, in a order of magnitude base this would be 1, 10, 100, etc.
- * @param currentComplexity The current complexity used for challenges
- * @param minComplexity The minimum allowed complexity so that challenges aren't too trivial to solve for a browser
- * @param maxComplexity The maximum allowed complexity so that challenges aren't too difficult to solve for a browser
- * @returns the desirable complexity for a challenge
- */
 export function getChallengeComplexity(
   currentUserCount: number,
-  previousUserThreshold: number,
-  currentComplexity: number,
-  minComplexity: number,
-  maxComplexity: number,
-  ratioToModifyComplexity: number
-): number {
-  // The current user count is an order of magnitude greater than the threshold
-  if (currentUserCount / previousUserThreshold > ratioToModifyComplexity) {
-    return Math.min(maxComplexity, currentComplexity + 1)
-  }
-
-  // The current user count is an order of magnitude lower than the threshold
-  if (previousUserThreshold / currentUserCount > ratioToModifyComplexity) {
-    return Math.max(minComplexity, currentComplexity - 1)
-  }
-
-  return currentComplexity
-}
-
-export function getChallengeComplexity2(
-  currentUserCount: number,
-  complexityThresholdMap: Record<number, number>,
-  minComplexity: number,
-  maxComplexity: number
+  complexityThresholdMap: Record<number, number>
 ): number {
   const thresholds = Object.keys(complexityThresholdMap).map((threshold) => parseInt(threshold))
 
@@ -81,8 +48,8 @@ export function getChallengeComplexity2(
   const filteredThresholds = sortedThresholds.filter((x) => x < currentUserCount)
 
   if (filteredThresholds.length === 0) {
-    return minComplexity
+    return complexityThresholdMap[sortedThresholds[sortedThresholds.length - 1]]
   }
 
-  return Math.min(maxComplexity, complexityThresholdMap[filteredThresholds[0]])
+  return complexityThresholdMap[filteredThresholds[0]]
 }

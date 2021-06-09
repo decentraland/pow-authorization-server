@@ -48,6 +48,7 @@ jwtCookieHeader = response.headers['Set-Cookie']
 ## Environment Variables
 
 - `SECRETS_DIRECTORY`: Path of the folder where the file `public_key.pem` will be stored when the app starts.
+- `COMPLEXITY_RANGES_VARIABLE`: This variable is used to define the ranges of complexity of the challenge sent to the users, it should always contain the 0, the default value is `0:4,600:5,1200:6,2000:7`
 
 ## Architecture
 

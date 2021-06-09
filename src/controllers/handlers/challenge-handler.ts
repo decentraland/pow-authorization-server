@@ -2,7 +2,7 @@ import { IHttpServerComponent } from '@well-known-components/interfaces'
 import {
   Challenge,
   generateChallenge,
-  getChallengeComplexity2,
+  getChallengeComplexity,
   incompleteSolvedChallenge,
   isValidChallenge,
   matchesComplexity,
@@ -10,27 +10,16 @@ import {
 } from '../../logic/challenge'
 import { getCookieHeader } from '../../logic/cookie'
 import { signJWT } from '../../logic/jwt'
-import {
-  AppComponents,
-  CacheRecordContent,
-  DEFAULT_MAX_COMPLEXITY_VARIABLE,
-  DEFAULT_MIN_COMPLEXITY_VARIABLE,
-  GlobalContext
-} from '../../types'
+import { AppComponents, CacheRecordContent, GlobalContext } from '../../types'
 
 export async function obtainChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
-  const { cache, logs, config, complexityRanges } = context.components
+  const { cache, logs, complexityRanges } = context.components
 
   let challenge: Challenge | null = null
 
-  const complexity = getChallengeComplexity2(
-    cache.getKeyCount(),
-    complexityRanges,
-    (await config.getNumber(DEFAULT_MIN_COMPLEXITY_VARIABLE)) as number,
-    (await config.getNumber(DEFAULT_MAX_COMPLEXITY_VARIABLE)) as number
-  )
+  const complexity = getChallengeComplexity(cache.getKeyCount(), complexityRanges)
 
   let tries = 0
   while (tries < 3) {

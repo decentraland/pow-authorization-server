@@ -28,6 +28,7 @@ describe('GET /challenge', () => {
 
   it('responds the complexity and challenge', async () => {
     const responseBody = await getChallengeResponse.json()
+    console.log('responseBody', responseBody)
 
     expect(responseBody).toEqual(expect.objectContaining({ challenge: expect.any(String), complexity: 4 }))
   })
@@ -41,6 +42,8 @@ describe('POST /challenge', () => {
   beforeAll(async () => {
     program = await startApp()
     const challengeResponse = await (await fetchLocalHost('/challenge')).json()
+
+    console.log('challengeResponse', challengeResponse)
     const challenge = challengeResponse?.challenge || ''
     const complexity = challengeResponse?.complexity || 0
 
