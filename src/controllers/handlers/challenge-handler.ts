@@ -31,7 +31,7 @@ export async function obtainChallengeHandler(
         {
           complexity: challenge.complexity
         },
-        '7d'
+        '30m'
       )
 
       break
@@ -92,6 +92,8 @@ export async function verifyChallengeHandler(
   if (!isValid) {
     return { status: 401, body: 'Invalid Challenge' }
   }
+
+  context.components.cache.del(toValidate.challenge)
 
   const signedJWT = signJWT(toValidate, context.components.keys.privateKey, context.components.keys.passphrase)
 

@@ -97,16 +97,21 @@ describe('challenge-controller-unit', () => {
 
   describe('validating a challenge', () => {
     let cacheGetSpy: jest.SpyInstance
+    let cacheDelSpy: jest.SpyInstance
     const challenge = 'a'
     const complexity = 2
 
     beforeEach(() => {
       cacheGetSpy = jest.spyOn(cache, 'get')
       cacheGetSpy.mockReturnValue(complexity)
+
+      cacheDelSpy = jest.spyOn(cache, 'del')
+      cacheDelSpy.mockImplementation(jest.fn())
     })
 
     afterEach(() => {
       cacheGetSpy.mockRestore()
+      cacheDelSpy.mockRestore()
     })
 
     describe("when the complexity doesn't match", () => {
@@ -192,6 +197,7 @@ describe('challenge-controller-unit', () => {
         } as any)
 
         expect(response.status).toEqual(200)
+        expect(cacheDelSpy).toHaveBeenCalledWith(challenge)
         expect((response.body as any).jwt).toEqual('aJwt')
         expect(response.headers as any).toEqual(expect.objectContaining(aCookie))
       })
