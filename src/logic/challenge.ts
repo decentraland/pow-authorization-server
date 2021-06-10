@@ -1,6 +1,5 @@
 import * as crypto from 'crypto'
 
-const DEFAULT_COMPLEXITY = 4
 const DEFAULT_CHALLENGE_LENGTH = 256
 const DEFAULT_HASHING_ALGORITHM = 'sha256'
 
@@ -13,7 +12,7 @@ export type SolvedChallenge = Challenge & {
   nonce: string
 }
 
-export async function generateChallenge(complexity: number = DEFAULT_COMPLEXITY): Promise<Challenge> {
+export async function generateChallenge(complexity: number): Promise<Challenge> {
   return {
     complexity: complexity,
     challenge: crypto.randomBytes(DEFAULT_CHALLENGE_LENGTH).toString('hex')

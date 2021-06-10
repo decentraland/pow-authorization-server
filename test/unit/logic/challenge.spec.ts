@@ -44,7 +44,7 @@ describe('challenge tests', () => {
 
   describe('generateChallenge', () => {
     it('should return a valid challenge', async () => {
-      expect(await generateChallenge()).toEqual(
+      expect(await generateChallenge(4)).toEqual(
         expect.objectContaining({ complexity: expect.any(Number), challenge: expect.any(String) })
       )
     })
@@ -67,6 +67,18 @@ describe('challenge tests', () => {
 
       it('should return the lower bound of the range', () => {
         expect(result).toEqual(5)
+      })
+    })
+
+    describe('when the current count is higher the last bound', () => {
+      let result: number
+
+      beforeEach(() => {
+        result = getChallengeComplexity(2500, thresholds)
+      })
+
+      it('should return the lower bound of the range', () => {
+        expect(result).toEqual(7)
       })
     })
 
