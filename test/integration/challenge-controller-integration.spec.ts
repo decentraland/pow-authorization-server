@@ -41,6 +41,7 @@ describe('POST /challenge', () => {
   beforeAll(async () => {
     program = await startApp()
     const challengeResponse = await (await fetchLocalHost('/challenge')).json()
+
     const challenge = challengeResponse?.challenge || ''
     const complexity = challengeResponse?.complexity || 0
 

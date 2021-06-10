@@ -11,6 +11,10 @@ interface CacheRecord<T> {
 export class InMemoryCache<T = any> {
   values: Record<string, CacheRecord<T>> = {}
 
+  getKeyCount(): number {
+    return Object.keys(this.values).length
+  }
+
   put(key: string, value: T, ttl: string = DEFAULT_TTL): CacheRecord<T> {
     if (this.values[key] != null) {
       throw new Error(`The key ${key} already exists`)
@@ -62,6 +66,8 @@ export class InMemoryCache<T = any> {
   }
 }
 
-export function createCache(): InMemoryCache {
-  return new InMemoryCache()
+export async function createAndInitializeCache(): Promise<InMemoryCache> {
+  const cache = new InMemoryCache()
+
+  return cache
 }

@@ -2,6 +2,7 @@ import { IHttpServerComponent } from '@well-known-components/interfaces'
 import {
   Challenge,
   generateChallenge,
+  getChallengeComplexity,
   incompleteSolvedChallenge,
   isValidChallenge,
   matchesComplexity,
@@ -14,13 +15,15 @@ import { AppComponents, CacheRecordContent, GlobalContext } from '../../types'
 export async function obtainChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
-  const { cache, logs } = context.components
+  const { cache, logs, complexityRanges } = context.components
 
   let challenge: Challenge | null = null
 
+  const complexity = getChallengeComplexity(cache.getKeyCount(), complexityRanges)
+
   let tries = 0
   while (tries < 3) {
-    challenge = await generateChallenge()
+    challenge = await generateChallenge(complexity)
 
     try {
       cache.put(
@@ -51,6 +54,7 @@ export async function obtainChallengeHandler(
 }
 
 export type VerifyChallengeComponents = Pick<AppComponents, 'keys'>
+
 export async function verifyChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
@@ -67,7 +71,7 @@ export async function verifyChallengeHandler(
   let currentChallenge: CacheRecordContent
 
   try {
-    currentChallenge = context.components.cache.get(toValidate.challenge, false)
+    currentChallenge = context.components.cache.get(toValidate.challenge, false) as Challenge
   } catch (err) {
     context.components.logs.getLogger('verifyChallengeHandler').info(err)
 

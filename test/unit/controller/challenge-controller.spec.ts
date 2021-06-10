@@ -1,26 +1,32 @@
-import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { IConfigComponent, IHttpServerComponent } from '@well-known-components/interfaces'
 import { createLogComponent } from '@well-known-components/logger'
 import { obtainChallengeHandler, verifyChallengeHandler } from '../../../src/controllers/handlers/challenge-handler'
 import * as logicChallenge from '../../../src/logic/challenge'
+import { createAndInitializeConfigComponent, parseRangesVariables } from '../../../src/logic/componentsUtils'
 import * as cookie from '../../../src/logic/cookie'
 import * as jwt from '../../../src/logic/jwt'
 import { generateSigningKeys, SigningKeys } from '../../../src/logic/key-generator'
 import * as cacheModule from '../../../src/ports/cache'
-import { AppComponents } from '../../../src/types'
+import { AppComponents, COMPLEXITY_RANGES_VARIABLE } from '../../../src/types'
 
 describe('challenge-controller-unit', () => {
   let keys: SigningKeys
-  const cache = cacheModule.createCache()
+  let cache: cacheModule.InMemoryCache
   const logs = createLogComponent()
+  let config: IConfigComponent
+  let complexityRanges: Record<number, number>
 
-  beforeEach(() => {
+  beforeEach(async () => {
     keys = generateSigningKeys()
+    config = await createAndInitializeConfigComponent()
+    complexityRanges = parseRangesVariables((await config.getString(COMPLEXITY_RANGES_VARIABLE)) || '')
+    cache = await cacheModule.createAndInitializeCache()
   })
 
   describe('getting a new challenge', () => {
     it('must return complexity 4', async () => {
       const response = await obtainChallengeHandler({
-        components: { cache, logs }
+        components: { cache, logs, config, complexityRanges }
       } as any)
 
       expect((response.body as any).complexity).toEqual(4)
@@ -29,7 +35,7 @@ describe('challenge-controller-unit', () => {
 
     it('must return a random challenge', async () => {
       const response = await obtainChallengeHandler({
-        components: { cache, logs }
+        components: { cache, logs, config, complexityRanges }
       } as any)
 
       expect((response.body as any).challenge).toBeDefined()
@@ -48,7 +54,7 @@ describe('challenge-controller-unit', () => {
           .mockReturnValueOnce({} as any)
 
         await obtainChallengeHandler({
-          components: { cache, logs }
+          components: { cache, logs, config, complexityRanges }
         } as any)
       })
 
@@ -71,7 +77,7 @@ describe('challenge-controller-unit', () => {
         })
 
         response = await obtainChallengeHandler({
-          components: { cache, logs }
+          components: { cache, logs, config, complexityRanges }
         } as any)
       })
 
@@ -119,7 +125,7 @@ describe('challenge-controller-unit', () => {
 
         response = await verifyChallengeHandler({
           request: r,
-          components: { keys, cache, logs } as any
+          components: { keys, cache, logs, config } as any
         } as any)
       })
 
@@ -156,7 +162,7 @@ describe('challenge-controller-unit', () => {
 
         const response = await verifyChallengeHandler({
           request: r,
-          components: { keys, cache, logs } as any
+          components: { keys, cache, logs, config } as any
         } as any)
 
         expect(response.status).toEqual(401)

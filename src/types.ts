@@ -29,5 +29,9 @@ export interface BaseComponents {
 // components used in runtime
 export interface AppComponents extends BaseComponents {
   statusChecks: IBaseComponent
-  cache: InMemoryCache<CacheRecordContent>
+  cache: InMemoryCache<CacheRecordContent | number>
+  complexityRanges: Record<number, number>
 }
+
+export const SECRETS_DIRECTORY_VARIABLE = 'SECRETS_DIRECTORY'
+export const COMPLEXITY_RANGES_VARIABLE = 'COMPLEXITY_RANGES'

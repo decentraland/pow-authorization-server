@@ -1,6 +1,5 @@
 import * as crypto from 'crypto'
 
-const DEFAULT_COMPLEXITY = 4
 const DEFAULT_CHALLENGE_LENGTH = 256
 const DEFAULT_HASHING_ALGORITHM = 'sha256'
 
@@ -13,9 +12,9 @@ export type SolvedChallenge = Challenge & {
   nonce: string
 }
 
-export async function generateChallenge(): Promise<Challenge> {
+export async function generateChallenge(complexity: number): Promise<Challenge> {
   return {
-    complexity: DEFAULT_COMPLEXITY,
+    complexity: complexity,
     challenge: crypto.randomBytes(DEFAULT_CHALLENGE_LENGTH).toString('hex')
   }
 }
@@ -36,4 +35,20 @@ function hashPhrase(phrase: string) {
 
 export function incompleteSolvedChallenge(toValidate: Partial<SolvedChallenge>): boolean {
   return toValidate.challenge === undefined || toValidate.complexity === undefined || toValidate.nonce === undefined
+}
+
+export function getChallengeComplexity(
+  currentUserCount: number,
+  complexityThresholdMap: Record<number, number>
+): number {
+  const thresholds = Object.keys(complexityThresholdMap).map((threshold) => parseInt(threshold))
+
+  const sortedThresholds = thresholds.sort((a, b) => b - a)
+  const filteredThresholds = sortedThresholds.filter((x) => x < currentUserCount)
+
+  if (filteredThresholds.length === 0) {
+    return complexityThresholdMap[sortedThresholds[sortedThresholds.length - 1]]
+  }
+
+  return complexityThresholdMap[filteredThresholds[0]]
 }

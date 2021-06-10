@@ -1,5 +1,5 @@
+import { createAndInitializeCache, InMemoryCache } from '../../../src/ports/cache'
 import ms = require('ms')
-import { createCache, InMemoryCache } from '../../../src/ports/cache'
 
 describe('cache', () => {
   let cache: InMemoryCache
@@ -15,10 +15,12 @@ describe('cache', () => {
 
   let setTimeoutSpy: jest.SpyInstance
   let clearTimeoutSpy: jest.SpyInstance
+  const minComplexity = 1
+  const minUsers = 2
 
   describe('adding a key to a cache', () => {
-    beforeEach(() => {
-      cache = createCache()
+    beforeEach(async () => {
+      cache = await createAndInitializeCache()
       setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
       clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
@@ -52,8 +54,8 @@ describe('cache', () => {
     })
 
     describe('if the key is not present', () => {
-      beforeEach(() => {
-        cache = createCache()
+      beforeEach(async () => {
+        cache = await createAndInitializeCache()
       })
 
       it('should throw an exception', () => {
@@ -64,8 +66,8 @@ describe('cache', () => {
     describe('if the key is present', () => {
       let timeoutId: NodeJS.Timeout
 
-      beforeEach(() => {
-        cache = createCache()
+      beforeEach(async () => {
+        cache = await createAndInitializeCache()
 
         const response = cache.put(key1, value1, ttl)
         timeoutId = response.timeoutId
@@ -86,11 +88,11 @@ describe('cache', () => {
 
   describe('obtaining the value for a key', () => {
     describe('if the key is not present', () => {
-      beforeEach(() => {
+      beforeEach(async () => {
         setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
         clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-        cache = createCache()
+        cache = await createAndInitializeCache()
       })
 
       afterEach(() => {
@@ -109,11 +111,11 @@ describe('cache', () => {
       describe('if it should refresh the cache', () => {
         let timeoutId: NodeJS.Timeout
 
-        beforeEach(() => {
+        beforeEach(async () => {
           setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
           clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-          cache = createCache()
+          cache = await createAndInitializeCache()
           const response = cache.put(key1, value1, ttl)
           timeoutId = response.timeoutId
 
@@ -142,11 +144,11 @@ describe('cache', () => {
       })
 
       describe('if it should not refresh the cache', () => {
-        beforeEach(() => {
+        beforeEach(async () => {
           setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation(jest.fn())
           clearTimeoutSpy = jest.spyOn(global, 'clearTimeout').mockImplementation(jest.fn())
 
-          cache = createCache()
+          cache = await createAndInitializeCache()
           cache.put(key2, value2, ttl)
 
           value = cache.get(key2, false)
