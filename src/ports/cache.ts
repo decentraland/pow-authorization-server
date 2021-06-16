@@ -2,7 +2,6 @@ import ms = require('ms')
 
 const DEFAULT_TTL = '1m'
 
-type OnExpirationCallback<T> = (key: string, value: T) => void
 
 interface CacheRecord<T> {
   value: T
