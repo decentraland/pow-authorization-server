@@ -2,7 +2,6 @@ import ms = require('ms')
 
 const DEFAULT_TTL = '1m'
 
-
 interface CacheRecord<T> {
   value: T
   timeoutId: NodeJS.Timeout

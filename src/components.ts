@@ -18,7 +18,7 @@ export async function initComponents(): Promise<AppComponents> {
   const keys = generateSigningKeys()
   const complexityRanges = parseRangesVariables((await config.getString(COMPLEXITY_RANGES_VARIABLE)) as string)
 
-  const emittedCache = createCache()
+  const unsolvedCache = createCache()
   const solvedCache = createCache()
 
   const dir: string = (await config.getString(SECRETS_DIRECTORY_VARIABLE)) as string
@@ -31,7 +31,7 @@ export async function initComponents(): Promise<AppComponents> {
     statusChecks,
     metrics,
     keys,
-    emittedCache,
+    unsolvedCache,
     solvedCache,
     complexityRanges
   }

@@ -11,7 +11,7 @@ import { AppComponents, COMPLEXITY_RANGES_VARIABLE } from '../../../src/types'
 
 describe('challenge-controller-unit', () => {
   let keys: SigningKeys
-  let emittedCache: cacheModule.InMemoryCache
+  let unsolvedCache: cacheModule.InMemoryCache
   let solvedCache: cacheModule.InMemoryCache
   const logs = createLogComponent()
   let config: IConfigComponent
@@ -21,14 +21,14 @@ describe('challenge-controller-unit', () => {
     keys = generateSigningKeys()
     config = await createAndInitializeConfigComponent()
     complexityRanges = parseRangesVariables((await config.getString(COMPLEXITY_RANGES_VARIABLE)) || '')
-    emittedCache = cacheModule.createCache()
+    unsolvedCache = cacheModule.createCache()
     solvedCache = cacheModule.createCache()
   })
 
   describe('getting a new challenge', () => {
     it('must return complexity 4', async () => {
       const response = await obtainChallengeHandler({
-        components: { emittedCache, solvedCache, logs, config, complexityRanges }
+        components: { unsolvedCache, solvedCache, logs, config, complexityRanges }
       } as any)
 
       expect((response.body as any).complexity).toEqual(4)
@@ -37,7 +37,7 @@ describe('challenge-controller-unit', () => {
 
     it('must return a random challenge', async () => {
       const response = await obtainChallengeHandler({
-        components: { emittedCache, solvedCache, logs, config, complexityRanges }
+        components: { unsolvedCache, solvedCache, logs, config, complexityRanges }
       } as any)
 
       expect((response.body as any).challenge).toBeDefined()
@@ -46,12 +46,15 @@ describe('challenge-controller-unit', () => {
 
     describe('when the challenge generated already exists', () => {
       let cachePutSpy: jest.SpyInstance
-      let emittedIsPresentSpy: jest.SpyInstance
+      let unsolvedIsPresentSpy: jest.SpyInstance
       let solvedIsPresentSpy: jest.SpyInstance
 
       beforeEach(async () => {
-        cachePutSpy = jest.spyOn(emittedCache, 'put').mockReturnValueOnce({} as any)
-        emittedIsPresentSpy = jest.spyOn(emittedCache, 'isPresent').mockReturnValueOnce(true).mockReturnValueOnce(false)
+        cachePutSpy = jest.spyOn(unsolvedCache, 'put').mockReturnValueOnce({} as any)
+        unsolvedIsPresentSpy = jest
+          .spyOn(unsolvedCache, 'isPresent')
+          .mockReturnValueOnce(true)
+          .mockReturnValueOnce(false)
         solvedIsPresentSpy = jest
           .spyOn(solvedCache, 'isPresent')
           .mockReturnValueOnce(true)
@@ -59,44 +62,44 @@ describe('challenge-controller-unit', () => {
           .mockReturnValueOnce(false)
 
         await obtainChallengeHandler({
-          components: { emittedCache, solvedCache, logs, config, complexityRanges }
+          components: { unsolvedCache, solvedCache, logs, config, complexityRanges }
         } as any)
       })
 
       afterEach(() => {
         cachePutSpy.mockRestore()
-        emittedIsPresentSpy.mockRestore()
+        unsolvedIsPresentSpy.mockRestore()
         solvedIsPresentSpy.mockRestore()
       })
 
       it('should call check if the key is present three times', () => {
-        console.log(emittedIsPresentSpy.mock.calls)
-        expect(emittedIsPresentSpy).toHaveBeenCalledTimes(3)
+        console.log(unsolvedIsPresentSpy.mock.calls)
+        expect(unsolvedIsPresentSpy).toHaveBeenCalledTimes(3)
       })
     })
 
     describe('when the challenge generated already exists three times', () => {
       let cachePutSpy: jest.SpyInstance
-      let emittedIsPresentSpy: jest.SpyInstance
+      let unsolvedIsPresentSpy: jest.SpyInstance
       let solvedIsPresentSpy: jest.SpyInstance
       let response: IHttpServerComponent.IResponse
 
       beforeEach(async () => {
-        cachePutSpy = jest.spyOn(emittedCache, 'put').mockImplementation(() => {
+        cachePutSpy = jest.spyOn(unsolvedCache, 'put').mockImplementation(() => {
           throw new Error('error')
         })
 
-        emittedIsPresentSpy = jest.spyOn(emittedCache, 'isPresent').mockReturnValue(true)
+        unsolvedIsPresentSpy = jest.spyOn(unsolvedCache, 'isPresent').mockReturnValue(true)
         solvedIsPresentSpy = jest.spyOn(solvedCache, 'isPresent').mockReturnValue(true)
 
         response = await obtainChallengeHandler({
-          components: { emittedCache, solvedCache, logs, config, complexityRanges }
+          components: { unsolvedCache, solvedCache, logs, config, complexityRanges }
         } as any)
       })
 
       afterEach(() => {
         cachePutSpy.mockRestore()
-        emittedIsPresentSpy.mockRestore()
+        unsolvedIsPresentSpy.mockRestore()
         solvedIsPresentSpy.mockRestore()
       })
 
@@ -117,10 +120,10 @@ describe('challenge-controller-unit', () => {
     const complexity = 2
 
     beforeEach(() => {
-      cacheGetSpy = jest.spyOn(emittedCache, 'get')
+      cacheGetSpy = jest.spyOn(unsolvedCache, 'get')
       cacheGetSpy.mockReturnValue(complexity)
 
-      cacheDelSpy = jest.spyOn(emittedCache, 'del')
+      cacheDelSpy = jest.spyOn(unsolvedCache, 'del')
       cacheDelSpy.mockImplementation(jest.fn())
     })
 
@@ -149,7 +152,7 @@ describe('challenge-controller-unit', () => {
 
         const response = await verifyChallengeHandler({
           request: r,
-          components: { keys, emittedCache, solvedCache, logs, config } as any
+          components: { keys, unsolvedCache, solvedCache, logs, config } as any
         } as any)
 
         expect(response.status).toEqual(400)
@@ -161,13 +164,13 @@ describe('challenge-controller-unit', () => {
       let matchesComplexitySpy: jest.SpyInstance
       let response: IHttpServerComponent.IResponse
       let solvedIsPresentSpy: jest.SpyInstance
-      let emittedIsPresentSpy: jest.SpyInstance
+      let unsolvedIsPresentSpy: jest.SpyInstance
 
       beforeEach(async () => {
         matchesComplexitySpy = jest.spyOn(logicChallenge, 'matchesComplexity')
         matchesComplexitySpy.mockReturnValue(false)
         solvedIsPresentSpy = jest.spyOn(solvedCache, 'isPresent').mockReturnValue(false)
-        emittedIsPresentSpy = jest.spyOn(emittedCache, 'isPresent').mockReturnValue(true)
+        unsolvedIsPresentSpy = jest.spyOn(unsolvedCache, 'isPresent').mockReturnValue(true)
 
         const r = {
           clone: () => ({
@@ -177,14 +180,14 @@ describe('challenge-controller-unit', () => {
 
         response = await verifyChallengeHandler({
           request: r,
-          components: { keys, emittedCache, solvedCache, logs, config } as any
+          components: { keys, unsolvedCache, solvedCache, logs, config } as any
         } as any)
       })
 
       afterEach(() => {
         matchesComplexitySpy.mockRestore()
         solvedIsPresentSpy.mockRestore()
-        emittedIsPresentSpy.mockRestore()
+        unsolvedIsPresentSpy.mockRestore()
       })
 
       it('should return 400 with the expected error message', () => {
@@ -195,20 +198,20 @@ describe('challenge-controller-unit', () => {
 
     describe('when the complexity does match', () => {
       let matchesComplexitySpy: jest.SpyInstance
-      let emittedIsPresentSpy: jest.SpyInstance
+      let unsolvedIsPresentSpy: jest.SpyInstance
       let solvedIsPresentSpy: jest.SpyInstance
 
       beforeEach(async () => {
         matchesComplexitySpy = jest.spyOn(logicChallenge, 'matchesComplexity')
         matchesComplexitySpy.mockReturnValue(true)
 
-        emittedIsPresentSpy = jest.spyOn(emittedCache, 'isPresent').mockReturnValue(true)
+        unsolvedIsPresentSpy = jest.spyOn(unsolvedCache, 'isPresent').mockReturnValue(true)
         solvedIsPresentSpy = jest.spyOn(solvedCache, 'isPresent').mockReturnValue(false)
       })
 
       afterEach(() => {
         matchesComplexitySpy.mockRestore()
-        emittedIsPresentSpy.mockRestore()
+        unsolvedIsPresentSpy.mockRestore()
         solvedIsPresentSpy.mockRestore()
       })
 
@@ -224,7 +227,7 @@ describe('challenge-controller-unit', () => {
 
         const response = await verifyChallengeHandler({
           request: r,
-          components: { keys, emittedCache, solvedCache, logs, config } as any
+          components: { keys, unsolvedCache, solvedCache, logs, config } as any
         } as any)
 
         expect(response.status).toEqual(401)
@@ -250,7 +253,7 @@ describe('challenge-controller-unit', () => {
 
         const response = await verifyChallengeHandler({
           request: r,
-          components: { keys, emittedCache, solvedCache, logs } as Partial<AppComponents>
+          components: { keys, unsolvedCache, solvedCache, logs } as Partial<AppComponents>
         } as any)
 
         expect(response.status).toEqual(200)

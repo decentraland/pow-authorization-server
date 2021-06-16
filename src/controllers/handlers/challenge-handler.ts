@@ -15,10 +15,10 @@ import { AppComponents, CacheRecordContent, GlobalContext } from '../../types'
 export async function obtainChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
-  const { solvedCache, emittedCache, complexityRanges } = context.components
+  const { solvedCache, unsolvedCache, complexityRanges } = context.components
 
-  // The amount of "active" users is the amount of challenges emitted in the last 30m plus the solved challenges in the last 30m
-  const complexity = getChallengeComplexity(emittedCache.getKeyCount() + solvedCache.getKeyCount(), complexityRanges)
+  // The amount of "active" users is the number of challenges emitted in the last 30m (both the solved and unsolved challenges)
+  const complexity = getChallengeComplexity(unsolvedCache.getKeyCount() + solvedCache.getKeyCount(), complexityRanges)
 
   let challenge: Challenge | null = null
   let tries = 0
@@ -27,18 +27,19 @@ export async function obtainChallengeHandler(
 
     tries += 1
 
-    if (emittedCache.isPresent(newChallenge.challenge) || solvedCache.isPresent(newChallenge.challenge)) {
+    if (unsolvedCache.isPresent(newChallenge.challenge) || solvedCache.isPresent(newChallenge.challenge)) {
       continue
     }
 
     challenge = newChallenge
+    break
   }
 
   if (challenge == null) {
     return { status: 500, body: "Couldn't generate a valid challenge please try again" }
   }
 
-  emittedCache.put(
+  unsolvedCache.put(
     challenge.challenge,
     {
       complexity: challenge.complexity
@@ -58,7 +59,7 @@ export async function verifyChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
   let toValidate: SolvedChallenge | undefined = undefined
-  const { emittedCache, solvedCache } = context.components
+  const { unsolvedCache, solvedCache } = context.components
 
   try {
     toValidate = await context.request.clone().json()
@@ -72,11 +73,11 @@ export async function verifyChallengeHandler(
     return { status: 400, body: 'Invalid Challenge, the challenge was already solved' }
   }
 
-  if (!emittedCache.isPresent(toValidate.challenge)) {
+  if (!unsolvedCache.isPresent(toValidate.challenge)) {
     return { status: 400, body: 'Invalid Challenge' }
   }
 
-  const currentChallenge: CacheRecordContent = emittedCache.get(toValidate.challenge, false) as Challenge
+  const currentChallenge: CacheRecordContent = unsolvedCache.get(toValidate.challenge, false) as Challenge
 
   const challengeToMatch = {
     challenge: toValidate.challenge,
@@ -93,7 +94,7 @@ export async function verifyChallengeHandler(
     return { status: 401, body: 'Invalid Challenge' }
   }
 
-  emittedCache.del(toValidate.challenge)
+  unsolvedCache.del(toValidate.challenge)
   solvedCache.put(
     toValidate.challenge,
     {
