@@ -2,10 +2,13 @@ import ms = require('ms')
 
 const DEFAULT_TTL = '1m'
 
+type OnExpirationCallback<T> = (key: string, value: T) => void
+
 interface CacheRecord<T> {
   value: T
   timeoutId: NodeJS.Timeout
   ttl: string
+  onExpiration: OnExpirationCallback<T>
 }
 
 export class InMemoryCache<T = any> {
@@ -15,7 +18,12 @@ export class InMemoryCache<T = any> {
     return Object.keys(this.values).length
   }
 
-  put(key: string, value: T, ttl: string = DEFAULT_TTL): CacheRecord<T> {
+  put(
+    key: string,
+    value: T,
+    ttl: string = DEFAULT_TTL,
+    onExpiration: OnExpirationCallback<T> = () => undefined
+  ): CacheRecord<T> {
     if (this.values[key] != null) {
       throw new Error(`The key ${key} already exists`)
     }
@@ -23,18 +31,24 @@ export class InMemoryCache<T = any> {
     const timeoutId = setTimeout(() => {
       try {
         this.del(key)
+        onExpiration(key, value)
       } catch {}
     }, ms(ttl))
 
     const cacheRecord: CacheRecord<T> = {
       value,
       timeoutId,
-      ttl
+      ttl,
+      onExpiration
     }
 
     this.values[key] = cacheRecord
 
     return cacheRecord
+  }
+
+  isPresent(key: string): boolean {
+    return !!this.values[key]
   }
 
   get(key: string, refreshCache: boolean = true): T {
@@ -48,6 +62,7 @@ export class InMemoryCache<T = any> {
       const timeoutId = setTimeout(() => {
         try {
           this.del(key)
+          this.values[key].onExpiration(key, this.values[key].value)
         } catch {}
       }, ms(this.values[key].ttl))
       this.values[key].timeoutId = timeoutId
@@ -66,7 +81,7 @@ export class InMemoryCache<T = any> {
   }
 }
 
-export async function createAndInitializeCache(): Promise<InMemoryCache> {
+export function createCache(): InMemoryCache {
   const cache = new InMemoryCache()
 
   return cache

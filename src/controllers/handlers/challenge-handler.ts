@@ -15,37 +15,36 @@ import { AppComponents, CacheRecordContent, GlobalContext } from '../../types'
 export async function obtainChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
-  const { cache, logs, complexityRanges } = context.components
+  const { solvedCache, emittedCache, complexityRanges } = context.components
+
+  // The amount of "active" users is the amount of challenges emitted in the last 30m plus the solved challenges in the last 30m
+  const complexity = getChallengeComplexity(emittedCache.getKeyCount() + solvedCache.getKeyCount(), complexityRanges)
 
   let challenge: Challenge | null = null
-
-  const complexity = getChallengeComplexity(cache.getKeyCount(), complexityRanges)
-
   let tries = 0
   while (tries < 3) {
-    challenge = await generateChallenge(complexity)
-
-    try {
-      cache.put(
-        challenge.challenge,
-        {
-          complexity: challenge.complexity
-        },
-        '30m'
-      )
-
-      break
-    } catch {
-      logs.getLogger('obtainChallengeHandler').info(`${challenge.challenge} key already exists`)
-      challenge = null
-    }
+    const newChallenge = await generateChallenge(complexity)
 
     tries += 1
+
+    if (emittedCache.isPresent(newChallenge.challenge) || solvedCache.isPresent(newChallenge.challenge)) {
+      continue
+    }
+
+    challenge = newChallenge
   }
 
   if (challenge == null) {
     return { status: 500, body: "Couldn't generate a valid challenge please try again" }
   }
+
+  emittedCache.put(
+    challenge.challenge,
+    {
+      complexity: challenge.complexity
+    },
+    '30m' // Allow 30m to solve the challenge
+  )
 
   return {
     body: { ...challenge },
@@ -59,6 +58,7 @@ export async function verifyChallengeHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext>
 ): Promise<IHttpServerComponent.IResponse> {
   let toValidate: SolvedChallenge | undefined = undefined
+  const { emittedCache, solvedCache } = context.components
 
   try {
     toValidate = await context.request.clone().json()
@@ -68,15 +68,15 @@ export async function verifyChallengeHandler(
     return { status: 400, body: 'Invalid Request, body must be present with challenge, nonce and complexity' }
   }
 
-  let currentChallenge: CacheRecordContent
+  if (solvedCache.isPresent(toValidate.challenge)) {
+    return { status: 400, body: 'Invalid Challenge, the challenge was already solved' }
+  }
 
-  try {
-    currentChallenge = context.components.cache.get(toValidate.challenge, false) as Challenge
-  } catch (err) {
-    context.components.logs.getLogger('verifyChallengeHandler').info(err)
-
+  if (!emittedCache.isPresent(toValidate.challenge)) {
     return { status: 400, body: 'Invalid Challenge' }
   }
+
+  const currentChallenge: CacheRecordContent = emittedCache.get(toValidate.challenge, false) as Challenge
 
   const challengeToMatch = {
     challenge: toValidate.challenge,
@@ -93,7 +93,14 @@ export async function verifyChallengeHandler(
     return { status: 401, body: 'Invalid Challenge' }
   }
 
-  context.components.cache.del(toValidate.challenge)
+  emittedCache.del(toValidate.challenge)
+  solvedCache.put(
+    toValidate.challenge,
+    {
+      complexity: toValidate.complexity
+    },
+    '30m'
+  )
 
   const signedJWT = signJWT(toValidate, context.components.keys.privateKey, context.components.keys.passphrase)
 
