@@ -83,12 +83,6 @@ describe('cache', () => {
       it('should not be present in the cache', () => {
         expect(() => cache.get(key1)).toThrow(Error(`The key ${key1} was not found`))
       })
-
-      describe('when the time expires', () => {
-        beforeEach(() => {
-          jest.useFakeTimers()
-        })
-      })
     })
   })
 

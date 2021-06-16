@@ -8,7 +8,6 @@ interface CacheRecord<T> {
   value: T
   timeoutId: NodeJS.Timeout
   ttl: string
-  onExpiration: OnExpirationCallback<T>
 }
 
 export class InMemoryCache<T = any> {
@@ -18,12 +17,7 @@ export class InMemoryCache<T = any> {
     return Object.keys(this.values).length
   }
 
-  put(
-    key: string,
-    value: T,
-    ttl: string = DEFAULT_TTL,
-    onExpiration: OnExpirationCallback<T> = () => undefined
-  ): CacheRecord<T> {
+  put(key: string, value: T, ttl: string = DEFAULT_TTL): CacheRecord<T> {
     if (this.values[key] != null) {
       throw new Error(`The key ${key} already exists`)
     }
@@ -31,15 +25,13 @@ export class InMemoryCache<T = any> {
     const timeoutId = setTimeout(() => {
       try {
         this.del(key)
-        onExpiration(key, value)
       } catch {}
     }, ms(ttl))
 
     const cacheRecord: CacheRecord<T> = {
       value,
       timeoutId,
-      ttl,
-      onExpiration
+      ttl
     }
 
     this.values[key] = cacheRecord
@@ -62,7 +54,6 @@ export class InMemoryCache<T = any> {
       const timeoutId = setTimeout(() => {
         try {
           this.del(key)
-          this.values[key].onExpiration(key, this.values[key].value)
         } catch {}
       }, ms(this.values[key].ttl))
       this.values[key].timeoutId = timeoutId
