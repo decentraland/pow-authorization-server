@@ -4,7 +4,7 @@ import { createMetricsComponent } from '@well-known-components/metrics'
 import { createAndInitializeConfigComponent, parseRangesVariables } from './logic/componentsUtils'
 import { generateSigningKeys } from './logic/key-generator'
 import { metricDeclarations } from './metrics'
-import { createAndInitializeCache } from './ports/cache'
+import { createCache } from './ports/cache'
 import { writeToFile } from './ports/local_storage'
 import { AppComponents, COMPLEXITY_RANGES_VARIABLE, GlobalContext, SECRETS_DIRECTORY_VARIABLE } from './types'
 
@@ -18,7 +18,8 @@ export async function initComponents(): Promise<AppComponents> {
   const keys = generateSigningKeys()
   const complexityRanges = parseRangesVariables((await config.getString(COMPLEXITY_RANGES_VARIABLE)) as string)
 
-  const cache = await createAndInitializeCache()
+  const unsolvedCache = createCache()
+  const solvedCache = createCache()
 
   const dir: string = (await config.getString(SECRETS_DIRECTORY_VARIABLE)) as string
   writeToFile(dir, 'public_key.pem', keys.publicKey)
@@ -30,7 +31,8 @@ export async function initComponents(): Promise<AppComponents> {
     statusChecks,
     metrics,
     keys,
-    cache,
+    unsolvedCache,
+    solvedCache,
     complexityRanges
   }
 }

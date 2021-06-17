@@ -29,7 +29,8 @@ export interface BaseComponents {
 // components used in runtime
 export interface AppComponents extends BaseComponents {
   statusChecks: IBaseComponent
-  cache: InMemoryCache<CacheRecordContent | number>
+  unsolvedCache: InMemoryCache<CacheRecordContent>
+  solvedCache: InMemoryCache<CacheRecordContent>
   complexityRanges: Record<number, number>
 }
 

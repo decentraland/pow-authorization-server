@@ -37,6 +37,10 @@ export class InMemoryCache<T = any> {
     return cacheRecord
   }
 
+  isPresent(key: string): boolean {
+    return !!this.values[key]
+  }
+
   get(key: string, refreshCache: boolean = true): T {
     if (!this.values[key]) {
       throw new Error(`The key ${key} was not found`)
@@ -66,7 +70,7 @@ export class InMemoryCache<T = any> {
   }
 }
 
-export async function createAndInitializeCache(): Promise<InMemoryCache> {
+export function createCache(): InMemoryCache {
   const cache = new InMemoryCache()
 
   return cache
