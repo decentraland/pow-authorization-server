@@ -30,7 +30,7 @@ export function matchesComplexity(solvedChallenge: SolvedChallenge, givenChallen
 }
 
 function hashPhrase(phrase: string) {
-  return crypto.createHash(DEFAULT_HASHING_ALGORITHM).update(phrase, 'hex').digest('hex')
+  return crypto.createHash(DEFAULT_HASHING_ALGORITHM).update(phrase, 'utf8').digest('hex')
 }
 
 export function incompleteSolvedChallenge(toValidate: Partial<SolvedChallenge>): boolean {
